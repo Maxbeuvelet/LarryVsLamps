@@ -1,0 +1,7 @@
+{
+  "channels": {
+    "a": { "name": "larryRBLX", "handle": "@thelarryrblx", "color": "blue" },
+    "b": { "name": "LampsGaming", "handle": "@reallampsgaming", "color": "orange" }
+  },
+  "shortMax": 180
+}

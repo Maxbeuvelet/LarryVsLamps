@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Larry vs Lamps</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,6 +34,8 @@
   --good:#2fbf2f; --warn:#fab219; --bad:#ef6a6a; --good-bg:rgba(12,163,12,.18); --warn-bg:rgba(250,178,25,.16); --bad-bg:rgba(208,59,59,.2);
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
+img{max-width:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;padding-inline:clamp(16px,3vw,32px);padding-block:0 48px}
 h1,h2,h3{font-family:"Bricolage Grotesque","IBM Plex Sans",system-ui,sans-serif;margin:0;text-wrap:balance;letter-spacing:-.01em}
 h2{font-size:17px;font-weight:700}
@@ -242,7 +249,8 @@ dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;justi
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:500;box-shadow:var(--shadow);z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;max-width:calc(100% - 32px)}
 .toast.on{opacity:1}
 </style>
-
+</head>
+<body>
 <header class="top">
   <div class="brand"><span class="mark" aria-hidden="true"></span><h1><span id="hName1">Larry</span><em>vs</em><span id="hName2">Lamps</span></h1></div>
   <div class="seg" role="group" aria-label="Period" id="period">
@@ -252,15 +260,14 @@ dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;justi
     <button data-p="0" aria-pressed="false">All time</button>
   </div>
   <div class="actions">
-    <button class="btn primary" id="btnImport">Import data</button>
-    <button class="btn" id="btnSettings">Settings</button>
+    <button class="btn" id="btnImport">How updates work</button>
   </div>
 </header>
 
 <div class="banner" id="banner" hidden>
-  <b>Showing sample data.</b> <span>Import your channels to replace it with real numbers.</span>
+  <b>Showing sample data.</b> <span>Real numbers appear once the first automatic update has run.</span>
   <span class="spacer"></span>
-  <button class="btn sm" id="bannerImport">Import now</button>
+  <button class="btn sm" id="bannerImport">How updates work</button>
 </div>
 
 <main>
@@ -338,51 +345,28 @@ dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;justi
 </aside>
 
 <dialog id="importDlg">
-  <div class="dh"><h2>Import data</h2><button class="btn sm" data-close>Close</button></div>
+  <div class="dh"><h2>How the numbers update</h2><button class="btn sm" data-close>Close</button></div>
   <div class="db">
-    <div class="tabs" role="tablist">
-      <button role="tab" aria-selected="true" data-tab="json">YouTube data (JSON)</button>
-      <button role="tab" aria-selected="false" data-tab="csv">YouTube Studio CSV</button>
+    <div>
+      <h3 style="margin-bottom:6px">Views, subscribers, likes, comments</h3>
+      <p class="help">Refreshed automatically every morning at 6:00 New York time by a scheduled job in the GitHub repository. Each run adds one point to the growth lines. Nothing to do.</p>
     </div>
-    <div id="tab-json" class="tabpane" style="display:grid;gap:12px">
-      <p class="help">Open <code>youtube-sync.html</code> from the project folder, fetch both channels with your API key, then paste or choose the JSON it produces. Each import adds a point to the growth lines, so run it regularly (daily is ideal).</p>
-      <div class="field"><label for="jsonFile">JSON file</label><input type="file" id="jsonFile" accept=".json,application/json"></div>
-      <div class="field"><label for="jsonText">Or paste JSON</label><textarea id="jsonText" placeholder='{"version":1,"channels":[...]}'></textarea></div>
-      <div id="jsonMap" style="display:grid;gap:8px"></div>
+    <div>
+      <h3 style="margin-bottom:6px">Click-through rate and retention (YouTube Studio)</h3>
+      <p class="help">These are private to each channel owner, so they come from a YouTube Studio export:</p>
+      <ol class="help" style="padding-left:18px;margin-top:6px;display:grid;gap:4px">
+        <li>In YouTube Studio: Analytics → Advanced mode → Content tab. Add the columns Impressions, Impressions click-through rate, Average view duration, Average percentage viewed. Date range: Lifetime. Export → CSV.</li>
+        <li>Unzip the download to find <code>Table data.csv</code>.</li>
+        <li>On GitHub, open the folder <code>data/studio/a</code> (Channel A) or <code>data/studio/b</code> (Channel B) and use <b>Add file → Upload files</b>. Any file name ending in .csv works; a newer file overrides an older one.</li>
+        <li>The dashboard rebuilds within a few minutes.</li>
+      </ol>
     </div>
-    <div id="tab-csv" class="tabpane" hidden style="display:grid;gap:12px">
-      <p class="help">In YouTube Studio: Analytics → Advanced mode → Content tab → add Impressions, Click-through rate, Average view duration and Average percentage viewed → Export → CSV. Import the <code>Table data.csv</code> here. Rows are matched to videos by video ID.</p>
-      <div class="grid-form">
-        <div class="field"><label for="csvFile">CSV file</label><input type="file" id="csvFile" accept=".csv,text/csv"></div>
-        <div class="field"><label for="csvChan">Channel</label><select id="csvChan"><option value="auto">Detect from video IDs</option><option value="a">A</option><option value="b">B</option></select></div>
-      </div>
-      <div id="csvPreview" class="help"></div>
+    <div>
+      <h3 style="margin-bottom:6px">Names, colors, Shorts rule</h3>
+      <p class="help">Edit <code>data/config.json</code> in the repository. Marking a single video as a Short or long-form from its details panel is remembered in this browser only.</p>
     </div>
+    <p class="help"><a href="https://github.com/Maxbeuvelet/LarryVsLamps" target="_blank" rel="noopener">Open the repository</a></p>
   </div>
-  <div class="df"><span class="help" id="importMsg" style="margin-right:auto"></span><button class="btn primary" id="importGo">Import</button></div>
-</dialog>
-
-<dialog id="settingsDlg">
-  <div class="dh"><h2>Settings</h2><button class="btn sm" data-close>Close</button></div>
-  <div class="db">
-    <div class="grid-form">
-      <div style="display:grid;gap:10px">
-        <h3>Channel A</h3>
-        <div class="field"><label for="sNameA">Display name</label><input id="sNameA"></div>
-        <div class="field"><label for="sHandleA">Handle</label><input id="sHandleA" placeholder="@handle"></div>
-        <div class="field"><label>Color</label><div class="swatches" id="swA"></div></div>
-      </div>
-      <div style="display:grid;gap:10px">
-        <h3>Channel B</h3>
-        <div class="field"><label for="sNameB">Display name</label><input id="sNameB"></div>
-        <div class="field"><label for="sHandleB">Handle</label><input id="sHandleB" placeholder="@handle"></div>
-        <div class="field"><label>Color</label><div class="swatches" id="swB"></div></div>
-      </div>
-    </div>
-    <div class="field"><label for="sShort">Treat videos up to this many seconds as Shorts</label><input id="sShort" type="number" min="15" max="300" step="5"></div>
-    <p class="help">YouTube's public data does not flag Shorts, so length is used as the rule. You can override any single video from its details panel.</p>
-  </div>
-  <div class="df"><button class="btn danger" id="clearAll" style="margin-right:auto">Delete all imported data</button><button class="btn primary" id="settingsSave">Save</button></div>
 </dialog>
 
 <div class="toast" id="toast" role="status"></div>
@@ -424,10 +408,10 @@ const state = {
   period: 90,
   filt: { chan:'all', fmt:'all', q:'', log:false },
   sort: { k:'publishedAt', dir:'desc' },
-  mode: 'connecting',    // connecting | db | local
+  mode: 'loading',       // loading | live | nodata
+  updatedAt: null,
   selected: null,
 };
-let db = null, sampleFn = null;
 
 // ---------- sample data ----------
 function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
@@ -483,37 +467,24 @@ function makeSample(){
 }
 
 // ---------- storage ----------
-const LS_KEY = 'lvl.data.v1';
+const LS_KEY = 'lvl.overrides.v1';
+let overrides = {}; try { overrides = JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {}; } catch (e) {}
 const store = {
   applySample(){ const s = makeSample(); state.videos = s.videos; state.channels = s.channels; state.sample = true; },
-  loadLocal(){ try { const raw = localStorage.getItem(LS_KEY); if (!raw) return false; const d = JSON.parse(raw); if (d.config) state.config = Object.assign(structuredClone(DEFAULT_CONFIG), d.config); if (d.channels && Object.keys(d.channels).length) { state.channels = d.channels; state.videos = d.videos || {}; state.sample = false; return true; } } catch(e){} return false; },
-  persistLocal(){ if (db) return; try { localStorage.setItem(LS_KEY, JSON.stringify({ config: state.config, channels: state.channels, videos: state.videos })); } catch(e){} },
-  async saveConfig(cfg){ state.config = cfg; if (db) await db.doc('meta/config').set(cfg); else this.persistLocal(); },
-  async saveChannel(key, doc){ state.channels[key] = doc; if (db) await db.doc('channels/'+key).set(doc); else this.persistLocal(); },
-  async saveVideos(list){
-    for (const v of list) state.videos[v.id] = v;
-    if (db) { const q = [...list]; const worker = async () => { while (q.length) { const v = q.shift(); await db.doc('videos/'+v.id).set(v); } }; await Promise.all(Array.from({length:6}, worker)); }
-    else this.persistLocal();
-  },
-  async clearAll(){
-    if (db) { const ids = Object.keys(state.videos); const q=[...ids]; const worker = async()=>{ while(q.length){ await db.doc('videos/'+q.shift()).delete(); } }; await Promise.all(Array.from({length:6}, worker)); for (const k of Object.keys(state.channels)) await db.doc('channels/'+k).delete(); }
-    else { try { localStorage.removeItem(LS_KEY); } catch(e){} }
-    state.videos = {}; state.channels = {}; store.applySample(); render();
-  },
-  async connect(){
-    try { db = await claude.use('db'); } catch(e){ db = null; }
-    if (!db) { state.mode = 'local'; if (!this.loadLocal()) this.applySample(); applyConfig(); render(); return; }
-    state.mode = 'db';
-    let gotReal = false;
-    const takeReal = () => { if (!gotReal) { gotReal = true; state.sample = false; if (isSample()) { state.videos = {}; state.channels = {}; } } };
-    const isSample = () => Object.keys(state.videos).some(id => id.startsWith('smp_'));
-    db.doc('meta/config').onSnapshot(s => { if (s.exists) { state.config = Object.assign(structuredClone(DEFAULT_CONFIG), s.data()); applyConfig(); render(); } }, e => console.warn(e));
-    db.collection('channels').limit(50).onSnapshot(s => { if (s.empty) { render(); return; } takeReal(); state.channels = {}; s.docs.forEach(d => state.channels[d.id] = d.data()); render(); }, e => setStatusErr(e));
-    db.collection('videos').limit(1000).onSnapshot(s => { if (s.empty) { render(); return; } takeReal(); const vids = {}; s.docs.forEach(d => vids[d.id] = d.data()); state.videos = vids; render(); }, e => setStatusErr(e));
-    render();
+  saveOverride(id, fmt){ overrides[id] = fmt; try { localStorage.setItem(LS_KEY, JSON.stringify(overrides)); } catch (e) {} },
+  async load(){
+    try {
+      const r = await fetch('data/db.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      if (d.config) state.config = Object.assign(structuredClone(DEFAULT_CONFIG), d.config);
+      if (d.channels && Object.keys(d.channels).length) { state.channels = d.channels; state.videos = d.videos || {}; state.sample = false; state.updatedAt = d.updatedAt || null; state.mode = 'live'; }
+      else state.mode = 'nodata';
+    } catch (e) { console.warn('No data file yet', e); state.mode = 'nodata'; }
+    for (const [id, f] of Object.entries(overrides)) if (state.videos[id]) state.videos[id].formatOverride = f;
+    applyConfig(); render();
   }
 };
-function setStatusErr(e){ console.warn(e); toast('Shared storage error: ' + (e && e.message || e)); }
 
 // ---------- derived data ----------
 function cfgCh(k){ return state.config.channels[k] || { name: k.toUpperCase(), color: k==='a'?'blue':'orange' }; }
@@ -710,10 +681,9 @@ function applyConfig(){
   $('#hName1').textContent = cfgCh('a').name; $('#hName2').textContent = cfgCh('b').name;
   document.title = `${cfgCh('a').name} vs ${cfgCh('b').name}`;
   $$('#fChan button[data-v="a"]').forEach(b => b.textContent = cfgCh('a').name); $$('#fChan button[data-v="b"]').forEach(b => b.textContent = cfgCh('b').name);
-  $('#csvChan option[value="a"]').textContent = cfgCh('a').name; $('#csvChan option[value="b"]').textContent = cfgCh('b').name;
 }
 function legendHTML(extra){ return `<span><i class="sw" style="--cc:var(--a)"></i>${esc(cfgCh('a').name)}</span><span><i class="sw" style="--cc:var(--b)"></i>${esc(cfgCh('b').name)}</span>${extra||''}`; }
-function thumbHTML(v, cls){ const short = formatOf(v)==='short'; return `<div class="thumb ${short?'s':''} ${cls||''}" style="--cc:var(--${v.ch})">${v.thumb ? `<img src="${esc(v.thumb)}" alt="">` : `<span>${esc(cfgCh(v.ch).name.slice(0,1))}</span>`}<span class="dur">${fmtDur(v.durationSec)}</span></div>`; }
+function thumbHTML(v, cls){ const short = formatOf(v)==='short'; const src = v.thumb || (v.id && !String(v.id).startsWith('smp_') ? 'https://i.ytimg.com/vi/' + encodeURIComponent(v.id) + '/mqdefault.jpg' : null); return `<div class="thumb ${short?'s':''} ${cls||''}" style="--cc:var(--${v.ch})">${src ? `<img src="${esc(src)}" alt="" loading="lazy">` : `<span>${esc(cfgCh(v.ch).name.slice(0,1))}</span>`}<span class="dur">${fmtDur(v.durationSec)}</span></div>`; }
 function periodLabel(){ return state.period ? `last ${state.period} days` : 'all time'; }
 
 function render(){
@@ -803,9 +773,8 @@ function renderQuad(){
 }
 function renderStatus(){
   const parts = [];
-  parts.push(state.mode === 'db' ? 'Shared storage connected: you and your friend see the same data.' : state.mode === 'local' ? 'Shared storage unavailable here: data is kept in this browser only.' : 'Connecting to shared storage…');
-  const dates = ['a','b'].map(k => state.channels[k]?.fetchedAt).filter(Boolean);
-  if (dates.length && !state.sample) parts.push('Last import ' + fmtDateY(dates.sort().pop()));
+  parts.push(state.mode === 'live' ? 'Updates automatically every morning at 6:00 New York time.' : state.mode === 'nodata' ? 'No data file yet: the first automatic update has not run.' : 'Loading…');
+  if (state.updatedAt && !state.sample) parts.push('Last update ' + new Date(state.updatedAt).toLocaleString());
   const st = Object.values(state.videos).filter(v=>v.studio).length; if (st && !state.sample) parts.push(`${st} videos with Studio metrics`);
   $('#status').innerHTML = parts.map(p=>`<span>${esc(p)}</span>`).join('');
 }
@@ -829,99 +798,12 @@ function openVideo(id){
       <div class="stat"><div class="l">Average viewed</div><div class="v">${fmtPct(s.avp,0)}</div>${d(s.avp, b.avp, x=>fmtPct(x,0))}<div class="d">${s.avd!=null?fmtDur(s.avd)+' of '+fmtDur(v.durationSec):'of '+fmtDur(v.durationSec)}</div></div>
     </div>
     <div><h3 style="margin-bottom:8px">Why it did what it did</h3><div class="sig"><ul>${sig.map(x => `<li class="${x.tone}"><span class="ic">${x.tone==='good'?'▲':x.tone==='bad'?'▼':x.tone==='warn'?'!':'·'}</span><div><b>${esc(x.head)}</b><span>${esc(x.body)}</span></div></li>`).join('')}</ul></div></div>
-    ${hist.length > 2 ? `<div><h3 style="margin-bottom:8px">Views since import history began</h3><div class="chart" id="chHist"></div></div>` : ''}
-    <div class="ai" id="aiBox" hidden><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b>Ask Claude</b><div class="help">Sends this video's numbers and the channel baseline; nothing else.</div></div><button class="btn sm" id="aiGo">Explain this video</button></div><div class="out" id="aiOut"></div></div>`;
+    ${hist.length > 2 ? `<div><h3 style="margin-bottom:8px">Views since import history began</h3><div class="chart" id="chHist"></div></div>` : ''}`;
   if (hist.length > 2) drawLines($('#chHist'), [{ name:'Views', color: chanColor(v.ch), points: hist.map(p=>({ x: parseDay(p.d).getTime(), y: p.views })) }], {});
-  $('#fmtToggle').addEventListener('click', async () => { v.formatOverride = f === 'short' ? 'long' : 'short'; await store.saveVideos([v]); render(); openVideo(id); toast('Format updated'); });
-  if (sampleFn) { $('#aiBox').hidden = false; $('#aiGo').addEventListener('click', () => askClaude(v, b, sig)); }
+  $('#fmtToggle').addEventListener('click', async () => { v.formatOverride = f === 'short' ? 'long' : 'short'; store.saveOverride(id, v.formatOverride); render(); openVideo(id); toast('Format updated for this browser'); });
   $('#drawer').classList.add('open'); $('#scrim').classList.add('on'); $('#drawerClose').focus();
 }
 function closeDrawer(){ $('#drawer').classList.remove('open'); $('#scrim').classList.remove('on'); state.selected = null; }
-async function askClaude(v, b, sig){
-  const out = $('#aiOut'), btn = $('#aiGo'); btn.disabled = true; out.textContent = 'Thinking…';
-  const s = v.studio || {};
-  const prompt = `You are a YouTube growth coach helping a new creator. Explain in plain language why this video performed the way it did, then give two specific, practical next steps. Be concrete and honest; do not pad. Under 170 words. Plain text, no markdown headers.
-
-Channel: ${cfgCh(v.ch).name}. Channel baseline for comparable uploads: median views ${fmtFull(b.medViews)}, like rate ${fmtPct(b.likeRate,2)}, comments per 1k views ${b.comRate!=null?b.comRate.toFixed(1):'unknown'}, CTR ${fmtPct(b.ctr)}, average % viewed ${fmtPct(b.avp,0)}, average length ${fmtDur(b.dur)}.
-Video: "${v.title}". ${formatOf(v)==='short'?'Short':'Long-form'}, ${fmtDur(v.durationSec)}, published ${new Date(v.publishedAt).toLocaleString()}. Views ${fmtFull(v.views)}, likes ${fmtFull(v.likes)}, comments ${fmtFull(v.comments)}, impressions ${fmtFull(s.impressions)}, CTR ${fmtPct(s.ctr)}, average % viewed ${fmtPct(s.avp,0)}, average view duration ${s.avd!=null?fmtDur(s.avd):'unknown'}.
-Signals already detected: ${sig.map(x=>x.head).join('; ')}.`;
-  try { const r = await sampleFn(prompt, { onText: u => { out.textContent = u.text; }, modelTier: 'default' }); out.textContent = r.text; }
-  catch (e) { out.textContent = e && e.code === 'not_granted' ? 'Claude access was not granted for this page.' : e && e.code === 'rate_limited' ? 'Too many requests right now. Try again in a minute.' : 'Could not get an answer: ' + (e && e.message || e); }
-  btn.disabled = false;
-}
-
-// ---------- import ----------
-let pendingJson = null, pendingCsv = null;
-function normHandle(h){ return String(h||'').trim().replace(/^@/, '').toLowerCase(); }
-function readFile(file){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsText(file); }); }
-function parseCSV(text){
-  const rows = []; let row = [], cell = '', q = false;
-  for (let i = 0; i < text.length; i++) { const c = text[i];
-    if (q) { if (c === '"') { if (text[i+1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
-    else if (c === '"') q = true; else if (c === ',') { row.push(cell); cell = ''; } else if (c === '\n' || c === '\r') { if (c === '\r' && text[i+1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; } else cell += c; }
-  if (cell.length || row.length) { row.push(cell); rows.push(row); }
-  return rows.filter(r => r.some(x => x.trim() !== ''));
-}
-function parseDurationCell(s){ if (s == null || s === '') return null; s = String(s).trim(); if (s.includes(':')) { const p = s.split(':').map(Number); return p.reduce((a,b)=>a*60+b, 0); } const n = parseFloat(s.replace(/,/g,'')); return isNaN(n) ? null : n; }
-function num(s){ if (s == null) return null; const n = parseFloat(String(s).replace(/[,%\s]/g,'')); return isNaN(n) ? null : n; }
-function prepJson(text){
-  const box = $('#jsonMap'); box.innerHTML = ''; pendingJson = null;
-  let d; try { d = JSON.parse(text); } catch(e) { $('#importMsg').textContent = 'That is not valid JSON.'; return; }
-  if (!d || !Array.isArray(d.channels)) { $('#importMsg').textContent = 'JSON does not look like youtube-sync output (missing "channels").'; return; }
-  const used = new Set();
-  const guess = c => { for (const k of ['a','b']) { const cc = cfgCh(k); if ((cc.ytId && cc.ytId === c.id) || (cc.handle && normHandle(cc.handle) === normHandle(c.handle))) { used.add(k); return k; } } return null; };
-  const map = d.channels.map(c => ({ c, key: guess(c) }));
-  for (const m of map) if (!m.key) { for (const k of ['a','b']) if (!used.has(k) && !cfgCh(k).handle && !cfgCh(k).ytId) { m.key = k; used.add(k); break; } }
-  for (const m of map) if (!m.key) { for (const k of ['a','b']) if (!used.has(k)) { m.key = k; used.add(k); break; } }
-  box.innerHTML = map.map((m, i) => `<div class="maprow"><span><b>${esc(m.c.title || m.c.handle || m.c.id)}</b> ${m.c.handle?'@'+esc(normHandle(m.c.handle)):''} · ${(m.c.videos||[]).length} videos · ${fmtFull(m.c.subs)} subs</span><select data-i="${i}"><option value="a" ${m.key==='a'?'selected':''}>Channel A · ${esc(cfgCh('a').name)}</option><option value="b" ${m.key==='b'?'selected':''}>Channel B · ${esc(cfgCh('b').name)}</option><option value="" ${!m.key?'selected':''}>Skip</option></select></div>`).join('');
-  pendingJson = { d, map }; $('#importMsg').textContent = `Ready: ${map.length} channel${map.length===1?'':'s'} found.`;
-}
-async function importJson(){
-  const { d, map } = pendingJson; const today = isoDay(new Date()); const cfg = structuredClone(state.config); let nv = 0;
-  $$('#jsonMap select').forEach(s => map[+s.dataset.i].key = s.value || null);
-  const keys = map.filter(m=>m.key).map(m=>m.key); if (new Set(keys).size !== keys.length) { $('#importMsg').textContent = 'Two channels are mapped to the same slot.'; return; }
-  const wasSample = state.sample; if (wasSample) { state.videos = {}; state.channels = {}; state.sample = false; }
-  for (const m of map) { if (!m.key) continue; const c = m.c, k = m.key;
-    const prev = state.channels[k] || {}; const history = (prev.history || []).filter(h => h.d !== today); history.push({ d: today, subs: c.subs ?? 0, views: c.views ?? 0 }); history.sort((x,y)=>x.d<y.d?-1:1);
-    await store.saveChannel(k, { subs: c.subs ?? null, views: c.views ?? null, videoCount: c.videoCount ?? (c.videos||[]).length, thumb: c.thumb || prev.thumb || null, title: c.title || null, fetchedAt: d.fetchedAt || new Date().toISOString(), history });
-    cfg.channels[k] = Object.assign({}, cfg.channels[k], { handle: cfg.channels[k].handle || c.handle || '', ytId: c.id || cfg.channels[k].ytId || '', name: cfg.channels[k].name && cfg.channels[k].name !== DEFAULT_CONFIG.channels[k].name ? cfg.channels[k].name : (c.title || cfg.channels[k].name) });
-    const list = (c.videos || []).map(x => { const prevV = state.videos[x.id] || {}; const hist = (prevV.history || []).filter(h => h.d !== today); hist.push({ d: today, views: x.views ?? 0, likes: x.likes ?? 0, comments: x.comments ?? 0 }); if (hist.length > 400) hist.splice(0, hist.length-400);
-      return Object.assign({}, prevV, { id: x.id, ch: k, title: x.title || prevV.title || x.id, publishedAt: x.publishedAt || prevV.publishedAt, durationSec: x.durationSec ?? prevV.durationSec ?? null, views: x.views ?? 0, likes: x.likes ?? 0, comments: x.comments ?? 0, thumb: x.thumb || prevV.thumb || null, history: hist }); });
-    await store.saveVideos(list); nv += list.length; }
-  await store.saveConfig(cfg); applyConfig(); render();
-  $('#importDlg').close(); toast(`Imported ${nv} videos across ${keys.length} channel${keys.length===1?'':'s'}`);
-}
-function prepCsv(text){
-  pendingCsv = null; const rows = parseCSV(text); if (rows.length < 2) { $('#csvPreview').textContent = 'CSV has no data rows.'; return; }
-  const head = rows[0].map(h => h.trim().toLowerCase());
-  const find = re => head.findIndex(h => re.test(h));
-  const col = { id: find(/^content$|video id|^video$/), title: find(/video title|^title$/), views: find(/^views$/), impressions: find(/^impressions$/), ctr: find(/click-?through/), avd: find(/average view duration/), avp: find(/average percentage viewed|average % viewed/), watch: find(/watch time/), subs: find(/^subscribers$/), pub: find(/publish/) };
-  if (col.id < 0) { $('#csvPreview').textContent = 'No "Content" or video ID column found. Export from the Content tab in Advanced mode.'; return; }
-  const recs = rows.slice(1).map(r => ({ id: (r[col.id]||'').trim(), title: col.title>=0 ? r[col.title] : '', views: col.views>=0 ? num(r[col.views]) : null, impressions: col.impressions>=0 ? num(r[col.impressions]) : null, ctr: col.ctr>=0 ? num(r[col.ctr]) : null, avd: col.avd>=0 ? parseDurationCell(r[col.avd]) : null, avp: col.avp>=0 ? num(r[col.avp]) : null, watchHours: col.watch>=0 ? num(r[col.watch]) : null, subsGained: col.subs>=0 ? num(r[col.subs]) : null, pub: col.pub>=0 ? r[col.pub] : null }))
-    .filter(r => r.id && !/^total$/i.test(r.id) && /^[\w-]{6,}$/.test(r.id));
-  const matched = recs.filter(r => state.videos[r.id] && !state.sample);
-  const chans = new Set(matched.map(r => state.videos[r.id].ch));
-  const found = ['impressions','ctr','avd','avp','watchHours','subsGained'].filter(k => recs.some(r => r[k] != null));
-  pendingCsv = { recs, autoCh: chans.size === 1 ? [...chans][0] : null };
-  $('#csvPreview').innerHTML = `${recs.length} video rows. ${matched.length} match videos already imported${chans.size===1?` (all on ${esc(cfgCh([...chans][0]).name)})`:''}. Metrics found: ${found.length ? found.map(k=>({impressions:'impressions',ctr:'CTR',avd:'avg view duration',avp:'avg % viewed',watchHours:'watch time',subsGained:'subscribers'})[k]).join(', ') : 'none of the expected columns'}.`;
-  $('#importMsg').textContent = recs.length ? 'Ready.' : '';
-}
-async function importCsv(){
-  const sel = $('#csvChan').value; const ch = sel === 'auto' ? pendingCsv.autoCh : sel;
-  if (!ch) { $('#importMsg').textContent = 'Pick which channel this CSV belongs to.'; return; }
-  const wasSample = state.sample; if (wasSample) { state.videos = {}; state.channels = {}; state.sample = false; }
-  const now = new Date().toISOString(); const list = []; let created = 0;
-  for (const r of pendingCsv.recs) { let v = state.videos[r.id];
-    if (!v) { if (!r.title) continue; v = { id: r.id, ch, title: r.title, publishedAt: r.pub ? new Date(r.pub).toISOString() : now, durationSec: null, views: r.views ?? 0, likes: 0, comments: 0, thumb: null, history: [] }; created++; }
-    else if (v.ch !== ch && sel !== 'auto') continue;
-    v = Object.assign({}, v, { studio: Object.assign({}, v.studio || {}, { impressions: r.impressions, ctr: r.ctr, avd: r.avd, avp: r.avp, watchHours: r.watchHours, subsGained: r.subsGained, updatedAt: now }) });
-    if (v.durationSec == null && r.avd != null && r.avp) v.durationSec = Math.round(r.avd / (r.avp/100));
-    if (v.studio.avp == null && r.avd != null && v.durationSec) v.studio.avp = +(r.avd / v.durationSec * 100).toFixed(1);
-    list.push(v); }
-  await store.saveVideos(list); render(); $('#importDlg').close();
-  toast(`Studio metrics added to ${list.length} videos${created ? ` (${created} new)` : ''}`);
-}
-
 // ---------- wiring ----------
 $('#period').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; state.period = +b.dataset.p; $$('#period button').forEach(x => x.setAttribute('aria-pressed', x === b)); render(); });
 $('#fChan').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; state.filt.chan = b.dataset.v; $$('#fChan button').forEach(x => x.setAttribute('aria-pressed', x === b)); renderExplorer(); });
@@ -933,37 +815,15 @@ $('#vtable tbody').addEventListener('click', e => { const tr = e.target.closest(
 $('#leader').addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (b) openVideo(b.dataset.id); });
 $('#drawerClose').addEventListener('click', closeDrawer); $('#scrim').addEventListener('click', closeDrawer);
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.selected) closeDrawer(); });
-$$('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
-const openImport = () => { $('#importMsg').textContent = ''; $('#importDlg').showModal(); };
+$('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+const openImport = () => $('#importDlg').showModal();
 $('#btnImport').addEventListener('click', openImport); $('#bannerImport').addEventListener('click', openImport);
-$$('#importDlg .tabs button').forEach(b => b.addEventListener('click', () => { $$('#importDlg .tabs button').forEach(x => x.setAttribute('aria-selected', x === b)); $('#tab-json').hidden = b.dataset.tab !== 'json'; $('#tab-csv').hidden = b.dataset.tab !== 'csv'; $('#importMsg').textContent = ''; }));
-$('#jsonFile').addEventListener('change', async e => { const f = e.target.files[0]; if (f) prepJson(await readFile(f)); });
-$('#jsonText').addEventListener('input', debounce(e => { if (e.target.value.trim()) prepJson(e.target.value); }, 300));
-$('#csvFile').addEventListener('change', async e => { const f = e.target.files[0]; if (f) prepCsv(await readFile(f)); });
-$('#importGo').addEventListener('click', async () => {
-  const isJson = !$('#tab-json').hidden; const btn = $('#importGo'); btn.disabled = true;
-  try { if (isJson) { if (!pendingJson) { $('#importMsg').textContent = 'Choose a file or paste JSON first.'; } else await importJson(); } else { if (!pendingCsv) { $('#importMsg').textContent = 'Choose a CSV file first.'; } else await importCsv(); } }
-  catch (e) { console.error(e); $('#importMsg').textContent = 'Import failed: ' + (e && e.message || e); }
-  btn.disabled = false;
-});
-function swatches(el, cur){ el.innerHTML = Object.keys(COLORS).map(k => `<button type="button" data-c="${k}" aria-label="${k}" aria-pressed="${k===cur}" style="--sc:${COLORS[k]}"></button>`).join(''); el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; el.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); }); }
-$('#btnSettings').addEventListener('click', () => { const c = state.config; $('#sNameA').value = cfgCh('a').name; $('#sHandleA').value = cfgCh('a').handle || ''; $('#sNameB').value = cfgCh('b').name; $('#sHandleB').value = cfgCh('b').handle || ''; $('#sShort').value = c.shortMax || 180; swatches($('#swA'), cfgCh('a').color); swatches($('#swB'), cfgCh('b').color); $('#settingsDlg').showModal(); });
-$('#settingsSave').addEventListener('click', async () => {
-  const cfg = structuredClone(state.config);
-  cfg.channels.a = Object.assign({}, cfg.channels.a, { name: $('#sNameA').value.trim() || 'Channel A', handle: $('#sHandleA').value.trim(), color: $('#swA button[aria-pressed="true"]')?.dataset.c || 'blue' });
-  cfg.channels.b = Object.assign({}, cfg.channels.b, { name: $('#sNameB').value.trim() || 'Channel B', handle: $('#sHandleB').value.trim(), color: $('#swB button[aria-pressed="true"]')?.dataset.c || 'orange' });
-  if (cfg.channels.a.color === cfg.channels.b.color) { toast('Pick two different colors so the channels stay distinguishable'); return; }
-  cfg.shortMax = clamp(+$('#sShort').value || 180, 15, 300);
-  await store.saveConfig(cfg); applyConfig(); render(); $('#settingsDlg').close(); toast('Settings saved');
-});
-$('#clearAll').addEventListener('click', async () => { if (state.sample) { toast('Nothing imported yet'); return; } if (!confirm('Delete every imported video and channel snapshot for both channels? This cannot be undone.')) return; await store.clearAll(); $('#settingsDlg').close(); toast('All imported data deleted'); });
 new ResizeObserver(debounce(() => { renderGrowth(); renderExplorer(); renderQuad(); if (state.selected) { const el = $('#chHist'); if (el) openVideo(state.selected); } }, 150)).observe(document.querySelector('main'));
 
 // ---------- boot ----------
 store.applySample(); applyConfig(); render();
-if (window.claude && typeof claude.use === 'function') {
-  store.connect();
-  claude.use('sample').then(s => { sampleFn = s; if (state.selected) openVideo(state.selected); }).catch(() => {});
-} else { state.mode = 'local'; if (store.loadLocal()) { applyConfig(); } render(); }
+store.load();
 })();
 </script>
+</body>
+</html>

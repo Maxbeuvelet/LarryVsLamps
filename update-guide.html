@@ -9,7 +9,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "IBM Plex San
 main{max-width:680px;margin:0 auto;display:grid;gap:28px}
 h1,h2{font-family:"Bricolage Grotesque","IBM Plex Sans",sans-serif;margin:0;text-wrap:balance;letter-spacing:-.01em}
 h1{font-size:30px;font-weight:800}
-h2{font-size:19px;font-weight:700;display:flex;align-items:center;gap:10px}
+h2{font-size:19px;font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 h2 .tag{font:600 11px/1 "IBM Plex Sans",sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:999px;background:var(--line);color:var(--ink-2)}
 p{margin:0;color:var(--ink-2)}
 .lede{font-size:16px}
@@ -32,21 +32,14 @@ a{color:var(--a)}
 <main>
   <div>
     <h1>Keeping the dashboard up to date</h1>
-    <p class="lede" style="margin-top:8px">Two routines. The quick one refreshes views, subs, likes and comments for both channels. The Studio one adds the private numbers that explain why a video worked.</p>
-    <p style="margin-top:10px">Dashboard: <a href="https://claude.ai/code/artifact/87305d9a-7741-40d4-a090-38a789292d69">claude.ai/code/artifact/87305d9a…</a></p>
+    <p class="lede" style="margin-top:8px">Views and subscribers refresh themselves every morning. The only manual step is the weekly YouTube Studio export, which adds the private numbers that explain why a video worked.</p>
+    <p style="margin-top:10px">Dashboard: <a href="https://maxbeuvelet.github.io/LarryVsLamps/">maxbeuvelet.github.io/LarryVsLamps</a></p>
   </div>
 
   <section class="a">
-    <h2>Quick refresh <span class="tag">Every day or two · 2 minutes</span></h2>
-    <p>Updates both channels at once. Anyone with the sync page and an API key can do it.</p>
-    <ol>
-      <li><div><b>Open <kbd>youtube-sync.html</kbd></b><span>Double-click it in the LarryVsLamps folder. The API key and both handles are already filled in from last time.</span></div></li>
-      <li><div><b>Click <kbd>Fetch both channels</kbd></b><span>Wait for the log to say "Done".</span></div></li>
-      <li><div><b>Click <kbd>Copy to clipboard</kbd></b></div></li>
-      <li><div><b>Open the dashboard and click <kbd>Import data</kbd></b><span>Top right of the page.</span></div></li>
-      <li><div><b>Paste into the "Or paste JSON" box, check both rows say the right channel, click <kbd>Import</kbd></b><span>Larry should map to Channel A and Lamps to Channel B.</span></div></li>
-    </ol>
-    <div class="note">Each import adds one dot to the growth lines. Skip a week and the line just has a gap, nothing breaks.</div>
+    <h2>Views, subs, likes, comments <span class="tag">Automatic · every day at 6:00 AM</span></h2>
+    <p>A scheduled job fetches both channels each morning and adds a point to the growth lines. Nothing to do.</p>
+    <div class="note">Want fresh numbers right now? On github.com open the repository → <kbd>Actions</kbd> → <kbd>Sync YouTube data</kbd> → <kbd>Run workflow</kbd>. The dashboard updates a few minutes later.</div>
   </section>
 
   <section class="b">
@@ -59,17 +52,17 @@ a{color:var(--a)}
       <li><div><b>Add these columns with <kbd>+ metric</kbd></b><span>Impressions · Impressions click-through rate · Average view duration · Average percentage viewed. Only needed the first time; Studio remembers them.</span></div></li>
       <li><div><b>Set the date range to <kbd>Lifetime</kbd></b><span>Top right. This makes sure every video is included.</span></div></li>
       <li><div><b>Click the <kbd>Export</kbd> arrow and choose <kbd>.csv</kbd></b><span>A zip downloads. Unzip it to find <kbd>Table data.csv</kbd>.</span></div></li>
-      <li><div><b>In the dashboard: <kbd>Import data</kbd> → <kbd>YouTube Studio CSV</kbd> tab → choose Table data.csv → <kbd>Import</kbd></b><span>Leave the channel on "Detect from video IDs". Do the quick refresh first if the videos are not in the dashboard yet.</span></div></li>
+      <li><div><b>Upload it to the repository</b><span>On github.com open <kbd>data/studio/a</kbd> (Larry) or <kbd>data/studio/b</kbd> (Lamps), click <kbd>Add file → Upload files</kbd>, drop the CSV in, and click <kbd>Commit changes</kbd>. Any file name ending in .csv works.</span></div></li>
     </ol>
-    <div class="note">If you would rather not import it yourself, send the CSV to whoever runs the dashboard and they can import it for you.</div>
+    <div class="note">The dashboard rebuilds within a few minutes. If you would rather not upload it yourself, send the CSV to whoever manages the repository.</div>
   </section>
 
   <section>
     <h2>What updates when</h2>
     <div class="when">
-      <b>Quick refresh</b><span>Subscribers, total views, every video's views, likes and comments, new uploads, growth lines, top videos, verdicts, Shorts vs long-form.</span>
+      <b>Daily job</b><span>Subscribers, total views, every video's views, likes and comments, new uploads, growth lines, top videos, verdicts, Shorts vs long-form.</span>
       <b>Studio CSV</b><span>Impressions, click-through rate, average view duration and percentage viewed. Fills in the "Packaging vs content" chart and the CTR and retention lines in each video's "why" panel.</span>
     </div>
-    <p class="meta"><span>The Studio import never overwrites view counts; the quick refresh never touches Studio numbers.</span></p>
+    <p class="meta"><span>Studio CSVs never overwrite view counts; the daily job never touches Studio numbers.</span></p>
   </section>
 </main>

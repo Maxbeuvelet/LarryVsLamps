@@ -1,0 +1,54 @@
+name: Sync YouTube data
+
+on:
+  schedule:
+    - cron: "0 10 * * *"   # 06:00 New York (10:00 UTC) every day
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "data/studio/**"
+      - "data/config.json"
+      - "scripts/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Fetch public stats from YouTube
+        if: ${{ env.YOUTUBE_API_KEY != '' }}
+        run: node scripts/fetch.js --out out/youtube.json --no-thumbs
+
+      - name: Warn when the API key secret is missing
+        if: ${{ env.YOUTUBE_API_KEY == '' }}
+        run: echo "::warning::YOUTUBE_API_KEY secret is not set; rebuilding from existing data and Studio CSVs only."
+
+      - name: Build data/db.json
+        run: node scripts/build.js
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/db.json
+          if git diff --cached --quiet; then
+            echo "No data changes."
+          else
+            git commit -m "Update data $(date -u +%Y-%m-%d)"
+            git push
+          fi

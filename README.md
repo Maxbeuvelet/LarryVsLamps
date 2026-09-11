@@ -1,58 +1,45 @@
 # Larry vs Lamps
 
-A head-to-head analytics dashboard for two YouTube channels. It shows who is ahead on subscribers, views and engagement, ranks every video, and explains why each one did well or badly.
+A head-to-head analytics dashboard for two YouTube channels: larryRBLX (Channel A) and LampsGaming (Channel B). It shows who is ahead on subscribers, views and engagement, ranks every video, and explains why each one did well or badly.
 
-## Files
+**Dashboard:** https://maxbeuvelet.github.io/LarryVsLamps/
 
-| File | What it is |
-|---|---|
-| `dashboard.html` | The dashboard. Published as a shareable Claude artifact; both of you open the same link. |
-| `youtube-sync.html` | A local helper page. Fetches both channels from the YouTube Data API and produces a JSON file to import. |
+## How it stays up to date
 
-## One-time setup
+A GitHub Actions job (`.github/workflows/sync.yml`) runs every day at 6:00 AM New York time. It fetches both channels from the YouTube Data API, merges the numbers into `data/db.json`, and commits the result. GitHub Pages then serves the updated dashboard. Each run adds one point to the growth lines.
 
-1. Get a free YouTube Data API key (about 3 minutes):
-   1. Go to https://console.cloud.google.com and create a project.
-   2. APIs & Services → Library → search "YouTube Data API v3" → Enable.
-   3. APIs & Services → Credentials → Create credentials → API key.
-   4. Leave "Application restrictions" as None so the local sync page can use it. Optionally restrict the key to the YouTube Data API only.
-2. Open `youtube-sync.html` in your browser (double-click it). Paste the key and both channel handles. They are remembered in that browser.
+The job needs one secret: **YOUTUBE_API_KEY**. Set it once at Settings → Secrets and variables → Actions → New repository secret. Without it the job still runs but only rebuilds from existing data.
 
-## Refreshing the numbers
-
-1. Open `youtube-sync.html` → Fetch both channels → Copy to clipboard (or Download JSON).
-2. Open the dashboard link → Import data → YouTube data (JSON) → paste or choose the file → Import.
-3. Each import adds one point to the growth lines, so import daily or every few days for a good curve. Either of you can do it.
+To run it by hand: Actions tab → "Sync YouTube data" → Run workflow.
 
 ## Adding YouTube Studio metrics (CTR, retention)
 
-Public data does not include impressions, click-through rate or retention, and those are the two numbers that explain most hits. Each of you exports them from your own Studio:
+Public data does not include impressions, click-through rate or retention, and those explain most hits. Each channel owner exports them from their own Studio:
 
-1. YouTube Studio → Analytics → Advanced mode.
-2. Content tab. Add the columns Impressions, Impressions click-through rate, Average view duration, Average percentage viewed.
-3. Set the date range to Lifetime (or the range you care about) → Export → CSV.
-4. In the dashboard: Import data → YouTube Studio CSV → choose `Table data.csv` from the export → Import.
+1. YouTube Studio → Analytics → Advanced mode → Content tab.
+2. Add the columns Impressions, Impressions click-through rate, Average view duration, Average percentage viewed.
+3. Date range: Lifetime → Export → CSV. Unzip to find `Table data.csv`.
+4. Upload it to `data/studio/a/` (Channel A) or `data/studio/b/` (Channel B), either with git or on github.com via Add file → Upload files. Any `.csv` name works; a newer file (alphabetically later) overrides an older one.
 
-Rows are matched to videos by video ID, so import the JSON first. The "Packaging vs content" chart and the CTR / retention signals appear once Studio data is in.
+The upload triggers the sync job, and the dashboard rebuilds within a few minutes.
+
+## Files
+
+| Path | What it is |
+|---|---|
+| `index.html` | The dashboard. Reads `data/db.json`. No build step. |
+| `data/db.json` | All merged data. Written by the sync job; do not edit by hand. |
+| `data/config.json` | Display names, handles, colors (blue, orange, aqua) and the Shorts length rule. |
+| `data/studio/a`, `data/studio/b` | Drop YouTube Studio CSV exports here. |
+| `scripts/fetch.js` | Pulls public stats from the YouTube Data API. `YOUTUBE_API_KEY=... node scripts/fetch.js --out out/youtube.json` |
+| `scripts/build.js` | Merges a fetch, the Studio CSVs and the config into `data/db.json`. |
+| `scripts/channels.json` | The two handles the fetch uses. |
+| `update-guide.html`, `UPDATE-GUIDE.md` | The short guide for both channel owners. |
 
 ## Notes
 
-- Shorts are detected by length (up to 180 seconds by default, changeable in Settings). Any single video can be overridden from its details panel.
+- Shorts are detected by length (up to 180 seconds by default, in `data/config.json`). A single video can be overridden from its details panel; that override is stored in the browser, not shared.
 - "Why it did what it did" compares each video against the median of comparable uploads on the same channel: same format when there are at least three of them, otherwise the whole channel.
-- The dashboard shows clearly labelled sample data until the first import.
-- Data is stored in the artifact's shared database, so both of you see the same numbers. If that storage is unavailable, the page falls back to the browser's local storage.
-
-## Links
-
-- Dashboard artifact: https://claude.ai/code/artifact/87305d9a-7741-40d4-a090-38a789292d69
-- Update guide artifact: https://claude.ai/code/artifact/0bf27ee0-305b-4b49-840d-6d02eff00b4c
-
-To change either page from a new Claude Code session on another PC, publish the edited file with `url` set to the link above so it updates in place rather than creating a new artifact.
-
-## Automatic daily update
-
-A scheduled cloud routine ("Larry vs Lamps daily sync") runs every day at 6:00 AM New York time. It clones this repo, runs `scripts/fetch.js` with the `YOUTUBE_API_KEY` environment variable from the cloud environment, merges the result into the dashboard's database with `scripts/merge.js`, and writes the documents back. Manage it at https://claude.ai/code/routines.
-
-- `scripts/channels.json` holds the two handles (a = Channel A, b = Channel B).
-- The routine never touches Studio metrics, so the weekly CSV import stays manual.
-- To run the same thing by hand: `YOUTUBE_API_KEY=... node scripts/fetch.js --out out/youtube.json` produces the same JSON as the sync page, which you can paste into the dashboard's Import panel.
+- The dashboard shows clearly labelled sample data until `data/db.json` exists.
+- The repository is public so GitHub Pages can serve it for free. It contains only public YouTube statistics and Studio exports; the API key lives in a repository secret and is never committed.
+- The earlier Claude artifact version of the dashboard is superseded by this one.

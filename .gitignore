@@ -1,8 +1,4 @@
-# Data exports and secrets never belong in the repo
-*.json
-*.csv
-*.zip
+out/
+youtube-*.json
 Thumbs.db
 .DS_Store
-out/
-!scripts/channels.json
