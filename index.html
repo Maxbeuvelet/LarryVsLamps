@@ -815,7 +815,7 @@ $('#vtable tbody').addEventListener('click', e => { const tr = e.target.closest(
 $('#leader').addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (b) openVideo(b.dataset.id); });
 $('#drawerClose').addEventListener('click', closeDrawer); $('#scrim').addEventListener('click', closeDrawer);
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.selected) closeDrawer(); });
-$('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+$$('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
 const openImport = () => $('#importDlg').showModal();
 $('#btnImport').addEventListener('click', openImport); $('#bannerImport').addEventListener('click', openImport);
 new ResizeObserver(debounce(() => { renderGrowth(); renderExplorer(); renderQuad(); if (state.selected) { const el = $('#chHist'); if (el) openVideo(state.selected); } }, 150)).observe(document.querySelector('main'));
