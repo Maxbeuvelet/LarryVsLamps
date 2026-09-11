@@ -96,7 +96,7 @@ for (const k of ['a', 'b']) {
 }
 
 // ---- 3. write ----
-db.config = config; db.updatedAt = new Date().toISOString();
+db.config = config; db.updatedAt = fetched ? (fetched.fetchedAt || new Date().toISOString()) : (db.updatedAt || null);
 fs.mkdirSync(path.dirname(dbFile), { recursive: true });
 fs.writeFileSync(dbFile, JSON.stringify(db));
 console.error(`Wrote ${dbFile}: ${Object.keys(db.videos).length} videos, ${Object.keys(db.channels).length} channels, ${studioApplied} Studio rows`);
