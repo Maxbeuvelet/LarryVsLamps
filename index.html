@@ -548,7 +548,7 @@ function signals(v){
       if (lowAvp) out.push({ tone:'bad', head:'Viewers dropped off early', body:`${fmtPct(s.avp,0)} average viewed vs usual ${fmtPct(b.avp,0)}. Look at where the retention graph dips in Studio.` });
     }
     if (s.impressions && b.pool.some(x=>x.studio?.impressions)) { const mi = median(b.pool.map(x=>x.studio?.impressions).filter(Boolean)); if (mi && s.impressions/mi >= 2) out.push({ tone:'good', head:'YouTube pushed it hard', body:`${fmtFull(s.impressions)} impressions, ${(s.impressions/mi).toFixed(1)}× the usual. Recommendations kicked in.` }); }
-  } else if (!s) out.push({ tone:'info', head:'No Studio data for this video yet', body:'Import a YouTube Studio CSV to see click-through rate and retention, the two numbers that explain most hits.' });
+  } else if (!s) out.push({ tone:'info', head:'No Studio data for this video yet', body:'Upload a YouTube Studio CSV (with the Average percentage viewed column) to see click-through rate and retention, the two numbers that explain most hits.' });
   const lr = likeRate(v);
   if (lr != null && b.likeRate != null) { const r = lr / b.likeRate; if (r >= 1.3) out.push({ tone:'good', head:'People liked it more than usual', body:`${fmtPct(lr)} like rate vs your usual ${fmtPct(b.likeRate)}.` }); else if (r <= 0.7) out.push({ tone:'warn', head:'Lower like rate than usual', body:`${fmtPct(lr)} vs your usual ${fmtPct(b.likeRate)}. Views came but the reaction was flat.` }); }
   if (v.views && b.comRate != null) { const cr = v.comments/v.views*1000; if (cr/b.comRate >= 1.5 && v.comments >= 5) out.push({ tone:'good', head:'Sparked conversation', body:`${cr.toFixed(1)} comments per 1,000 views vs usual ${b.comRate.toFixed(1)}. Reply to them; it feeds the algorithm.` }); }
@@ -565,7 +565,7 @@ function chanColor(k){ return `var(--${k})`; }
 function drawLines(host, series, opts){
   host.innerHTML = '';
   const pts = series.flatMap(s => s.points);
-  if (!pts.length || series.every(s => s.points.length < 2)) { host.innerHTML = `<div class="empty">${esc(opts.empty || 'Not enough history yet. Each import adds a point to this line.')}</div>`; return; }
+  if (!pts.length || series.every(s => s.points.length < 2)) { host.innerHTML = `<div class="empty">${esc(opts.empty || 'Not enough history yet. Each daily update adds a point to this line.')}</div>`; return; }
   const W = Math.max(280, host.clientWidth || 600), H = 230, padL = 46, padR = 62, padT = 14, padB = 26;
   const xs = pts.map(p=>p.x), x0 = opts.x0 ?? Math.min(...xs), x1 = Math.max(...xs, x0 + DAY);
   const ymax = niceMax(Math.max(...pts.map(p=>p.y), 1) * 1.05);
@@ -648,7 +648,7 @@ function drawScatter(host, points, opts){
 
 function drawQuadrant(host, points){
   host.innerHTML = '';
-  if (points.length < 2) { host.innerHTML = '<div class="empty">Import a YouTube Studio CSV for either channel and this chart fills in.</div>'; return; }
+  if (points.length < 2) { host.innerHTML = '<div class="empty">Upload a YouTube Studio CSV that includes Average percentage viewed and this chart fills in.</div>'; return; }
   const W = Math.max(280, host.clientWidth || 600), H = 260, padL = 40, padR = 16, padT = 22, padB = 30;
   const xmax = niceMax(Math.max(...points.map(p=>p.x))*1.15), ymax = Math.min(100, niceMax(Math.max(...points.map(p=>p.y))*1.1));
   const X = v => padL + v/xmax*(W-padL-padR), Y = v => padT + (1 - v/ymax)*(H-padT-padB);
@@ -696,7 +696,7 @@ function renderScore(){
     <div class="avatar">${ch.thumb ? `<img src="${esc(ch.thumb)}" alt="">` : esc(c.name.slice(0,1))}</div>
     <div><div class="name">${esc(c.name)}</div><div class="handle">${c.handle ? esc(c.handle.startsWith('@')?c.handle:'@'+c.handle) : 'No handle set'}</div>
       <div class="big">${fmtN(S.subs)}<small>subscribers</small></div>
-      <div class="delta">${S.subsGained != null ? `<b>${S.subsGained>=0?'+':''}${fmtFull(S.subsGained)}</b> ${periodLabel()}` : 'Import again later to track growth'}</div>
+      <div class="delta">${S.subsGained != null ? `<b>${S.subsGained>=0?'+':''}${fmtFull(S.subsGained)}</b> ${periodLabel()}` : 'Growth shows after the next daily update'}</div>
       <div class="mini"><span><b>${fmtN(S.totalViews)}</b>total views</span><span><b>${fmtFull(S.videoCount)}</b>videos</span><span><b>${fmtN(S.avgViews)}</b>avg views, ${periodLabel()}</span></div>
     </div></div>`; };
   const metrics = [['subs',A.subs,B.subs],['viewsGained',A.viewsGained,B.viewsGained],['published',A.published,B.published],['avgViews',A.avgViews,B.avgViews],['likeRate',A.likeRate,B.likeRate]];
@@ -798,7 +798,7 @@ function openVideo(id){
       <div class="stat"><div class="l">Average viewed</div><div class="v">${fmtPct(s.avp,0)}</div>${d(s.avp, b.avp, x=>fmtPct(x,0))}<div class="d">${s.avd!=null?fmtDur(s.avd)+' of '+fmtDur(v.durationSec):'of '+fmtDur(v.durationSec)}</div></div>
     </div>
     <div><h3 style="margin-bottom:8px">Why it did what it did</h3><div class="sig"><ul>${sig.map(x => `<li class="${x.tone}"><span class="ic">${x.tone==='good'?'▲':x.tone==='bad'?'▼':x.tone==='warn'?'!':'·'}</span><div><b>${esc(x.head)}</b><span>${esc(x.body)}</span></div></li>`).join('')}</ul></div></div>
-    ${hist.length > 2 ? `<div><h3 style="margin-bottom:8px">Views since import history began</h3><div class="chart" id="chHist"></div></div>` : ''}`;
+    ${hist.length > 2 ? `<div><h3 style="margin-bottom:8px">Views since tracking began</h3><div class="chart" id="chHist"></div></div>` : ''}`;
   if (hist.length > 2) drawLines($('#chHist'), [{ name:'Views', color: chanColor(v.ch), points: hist.map(p=>({ x: parseDay(p.d).getTime(), y: p.views })) }], {});
   $('#fmtToggle').addEventListener('click', async () => { v.formatOverride = f === 'short' ? 'long' : 'short'; store.saveOverride(id, v.formatOverride); render(); openVideo(id); toast('Format updated for this browser'); });
   $('#drawer').classList.add('open'); $('#scrim').classList.add('on'); $('#drawerClose').focus();
