@@ -48,3 +48,11 @@ Rows are matched to videos by video ID, so import the JSON first. The "Packaging
 - Update guide artifact: https://claude.ai/code/artifact/0bf27ee0-305b-4b49-840d-6d02eff00b4c
 
 To change either page from a new Claude Code session on another PC, publish the edited file with `url` set to the link above so it updates in place rather than creating a new artifact.
+
+## Automatic daily update
+
+A scheduled cloud routine ("Larry vs Lamps daily sync") runs every day at 6:00 AM New York time. It clones this repo, runs `scripts/fetch.js` with the `YOUTUBE_API_KEY` environment variable from the cloud environment, merges the result into the dashboard's database with `scripts/merge.js`, and writes the documents back. Manage it at https://claude.ai/code/routines.
+
+- `scripts/channels.json` holds the two handles (a = Channel A, b = Channel B).
+- The routine never touches Studio metrics, so the weekly CSV import stays manual.
+- To run the same thing by hand: `YOUTUBE_API_KEY=... node scripts/fetch.js --out out/youtube.json` produces the same JSON as the sync page, which you can paste into the dashboard's Import panel.
