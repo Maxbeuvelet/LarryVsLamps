@@ -260,6 +260,7 @@ dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;justi
     <button data-p="0" aria-pressed="false">All time</button>
   </div>
   <div class="actions">
+    <button class="btn primary" id="btnCsv">Upload Studio CSV</button>
     <button class="btn" id="btnImport">How updates work</button>
   </div>
 </header>
@@ -357,7 +358,7 @@ dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;justi
       <ol class="help" style="padding-left:18px;margin-top:6px;display:grid;gap:4px">
         <li>In YouTube Studio: Analytics → Advanced mode → Content tab. Add the columns Impressions, Impressions click-through rate, Average view duration, Average percentage viewed. Date range: Lifetime. Export → CSV.</li>
         <li>Unzip the download to find <code>Table data.csv</code>.</li>
-        <li>On GitHub, open the folder <code>data/studio/a</code> (Channel A) or <code>data/studio/b</code> (Channel B) and use <b>Add file → Upload files</b>. Any file name ending in .csv works; a newer file overrides an older one.</li>
+        <li>Click <b>Upload Studio CSV</b> at the top of this page, pick the channel and the file. The first time it asks for a GitHub token; the dialog explains how to get one. The numbers show on your screen straight away and the shared dashboard rebuilds within a few minutes.</li>
         <li>The dashboard rebuilds within a few minutes.</li>
       </ol>
     </div>
@@ -367,6 +368,31 @@ dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;justi
     </div>
     <p class="help"><a href="https://github.com/Maxbeuvelet/LarryVsLamps" target="_blank" rel="noopener">Open the repository</a></p>
   </div>
+</dialog>
+
+<dialog id="csvDlg">
+  <div class="dh"><h2>Upload a YouTube Studio export</h2><button class="btn sm" data-close>Close</button></div>
+  <div class="db">
+    <p class="help">Adds click-through rate and retention for one channel. In YouTube Studio: Analytics → Advanced mode → Content tab, with the columns Impressions, Impressions click-through rate, Average view duration and Average percentage viewed. Date range Lifetime → Export → CSV. Unzip the download to find <code>Table data.csv</code>.</p>
+    <div class="grid-form">
+      <div class="field"><label for="csvChan">Channel</label><select id="csvChan"><option value="a">Channel A</option><option value="b">Channel B</option></select></div>
+      <div class="field"><label for="csvFile">CSV file</label><input type="file" id="csvFile" accept=".csv,text/csv"></div>
+    </div>
+    <div class="field" id="tokenField">
+      <label for="csvToken">GitHub token (asked once, kept in this browser only)</label>
+      <input id="csvToken" type="password" autocomplete="off" placeholder="github_pat_…">
+      <details class="help"><summary>How to get a token (about 2 minutes)</summary><ol>
+        <li>On github.com, click your profile picture → <b>Settings</b> → <b>Developer settings</b> (bottom of the left menu) → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</li>
+        <li>Name: anything. Expiration: pick the longest offered.</li>
+        <li>Repository access: <b>Only select repositories</b> → choose <b>LarryVsLamps</b>.</li>
+        <li>Permissions → Repository permissions → <b>Contents</b> → <b>Read and write</b>.</li>
+        <li>Generate, copy the token, paste it above. It is stored in this browser and never leaves it except to talk to GitHub.</li>
+      </ol><p style="margin-top:6px">A friend uploading their own channel needs to be added as a collaborator on the repository first (repository Settings → Collaborators), then makes their own token the same way.</p></details>
+    </div>
+    <p class="help" id="tokenNote" hidden>Token saved in this browser. <a href="#" id="forgetToken">Forget it</a></p>
+    <p class="help" id="csvMsg"></p>
+  </div>
+  <div class="df"><button class="btn primary" id="csvGo">Upload</button></div>
 </dialog>
 
 <div class="toast" id="toast" role="status"></div>
@@ -818,6 +844,74 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.sele
 $$('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
 const openImport = () => $('#importDlg').showModal();
 $('#btnImport').addEventListener('click', openImport); $('#bannerImport').addEventListener('click', openImport);
+
+// ---------- Studio CSV upload ----------
+const REPO = 'Maxbeuvelet/LarryVsLamps';
+const TOKEN_KEY = 'lvl.github.token';
+const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } };
+const setToken = t => { try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) {} };
+function parseCSV(text){
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) { const c = text[i];
+    if (q) { if (c === '"') { if (text[i+1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true; else if (c === ',') { row.push(cell); cell = ''; } else if (c === '\n' || c === '\r') { if (c === '\r' && text[i+1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; } else cell += c; }
+  if (cell.length || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim() !== ''));
+}
+const csvNum = s => { if (s == null) return null; const n = parseFloat(String(s).replace(/[,%\s]/g, '')); return isNaN(n) ? null : n; };
+const csvDur = s => { if (s == null || s === '') return null; s = String(s).trim(); if (s.includes(':')) return s.split(':').map(Number).reduce((a, b) => a*60 + b, 0); const n = parseFloat(s.replace(/,/g, '')); return isNaN(n) ? null : n; };
+function parseStudio(text){
+  const rows = parseCSV(text.replace(/^\uFEFF/, '')); if (rows.length < 2) throw new Error('The file has no data rows.');
+  const head = rows[0].map(h => h.trim().toLowerCase()); const find = re => head.findIndex(h => re.test(h));
+  const col = { id: find(/^content$|video id|^video$/), title: find(/video title|^title$/), views: find(/^views$/), impressions: find(/^impressions$/), ctr: find(/click-?through/), avd: find(/average view duration/), avp: find(/average percentage viewed|average % viewed/), watch: find(/watch time/), subs: find(/^subscribers$/), pub: find(/publish/) };
+  if (col.id < 0) throw new Error('No "Content" column found. Export from the Content tab in Advanced mode.');
+  const recs = rows.slice(1).map(r => ({ id: (r[col.id]||'').trim(), title: col.title >= 0 ? r[col.title] : '', views: col.views >= 0 ? csvNum(r[col.views]) : null, impressions: col.impressions >= 0 ? csvNum(r[col.impressions]) : null, ctr: col.ctr >= 0 ? csvNum(r[col.ctr]) : null, avd: col.avd >= 0 ? csvDur(r[col.avd]) : null, avp: col.avp >= 0 ? csvNum(r[col.avp]) : null, watchHours: col.watch >= 0 ? csvNum(r[col.watch]) : null, subsGained: col.subs >= 0 ? csvNum(r[col.subs]) : null, pub: col.pub >= 0 ? r[col.pub] : null }))
+    .filter(r => r.id && !/^total$/i.test(r.id) && /^[\w-]{6,}$/.test(r.id));
+  const missing = ['impressions','ctr','avd','avp'].filter(k => col[k] < 0).map(k => ({ impressions:'Impressions', ctr:'Click-through rate', avd:'Average view duration', avp:'Average percentage viewed' })[k]);
+  return { recs, missing };
+}
+function applyStudio(recs, ch){
+  let n = 0; const now = new Date().toISOString();
+  for (const r of recs) { let v = state.videos[r.id];
+    if (!v) { if (!r.title) continue; v = state.videos[r.id] = { id: r.id, ch, title: r.title, publishedAt: r.pub ? new Date(r.pub).toISOString() : now, durationSec: null, views: r.views || 0, likes: 0, comments: 0, thumb: null, history: [] }; }
+    const s = { impressions: r.impressions, ctr: r.ctr, avd: r.avd, avp: r.avp, watchHours: r.watchHours, subsGained: r.subsGained, updatedAt: now };
+    if (v.durationSec == null && s.avd != null && s.avp) v.durationSec = Math.round(s.avd / (s.avp/100));
+    if (s.avp == null && s.avd != null && v.durationSec) s.avp = +(s.avd / v.durationSec * 100).toFixed(1);
+    v.studio = Object.assign({}, v.studio || {}, s); n++; }
+  return n;
+}
+function openCsv(){
+  $('#csvChan').options[0].textContent = 'Channel A · ' + cfgCh('a').name; $('#csvChan').options[1].textContent = 'Channel B · ' + cfgCh('b').name;
+  const has = !!getToken(); $('#tokenField').hidden = has; $('#tokenNote').hidden = !has; $('#csvMsg').textContent = ''; $('#csvGo').disabled = false;
+  $('#csvDlg').showModal();
+}
+$('#btnCsv').addEventListener('click', openCsv);
+$('#forgetToken').addEventListener('click', e => { e.preventDefault(); setToken(''); $('#tokenField').hidden = false; $('#tokenNote').hidden = true; $('#csvToken').value = ''; });
+$('#csvGo').addEventListener('click', async () => {
+  const msg = $('#csvMsg'), btn = $('#csvGo'); const file = $('#csvFile').files[0]; const ch = $('#csvChan').value;
+  const token = getToken() || $('#csvToken').value.trim();
+  if (!file) { msg.textContent = 'Choose the CSV file first.'; return; }
+  if (!token) { msg.textContent = 'Paste a GitHub token so the file can be saved to the repository.'; return; }
+  btn.disabled = true; msg.textContent = 'Reading file…';
+  try {
+    const text = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsText(file); });
+    const { recs, missing } = parseStudio(text);
+    if (!recs.length) throw new Error('No video rows found in this file.');
+    msg.textContent = 'Saving to the repository…';
+    const stamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 16);
+    const path = 'data/studio/' + ch + '/' + stamp + '-' + ch + '.csv';
+    const b64 = btoa(unescape(encodeURIComponent(text)));
+    const r = await fetch('https://api.github.com/repos/' + REPO + '/contents/' + path, { method: 'PUT', headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ message: 'Studio export for channel ' + ch.toUpperCase() + ' (' + cfgCh(ch).name + ')', content: b64, branch: 'main' }) });
+    if (r.status === 401) throw new Error('GitHub rejected the token. Check it is a fine-grained token with Contents: Read and write on LarryVsLamps, and that it has not expired.');
+    if (r.status === 403 || r.status === 404) throw new Error('No permission to write to the repository. The token must belong to a collaborator with write access and be scoped to LarryVsLamps.');
+    if (!r.ok) { let d = ''; try { d = (await r.json()).message || ''; } catch (e) {} throw new Error('GitHub error ' + r.status + (d ? ': ' + d : '')); }
+    setToken(token); $('#tokenField').hidden = true; $('#tokenNote').hidden = false; $('#csvToken').value = '';
+    const n = applyStudio(recs, ch); state.sample = false; render();
+    $('#csvDlg').close();
+    toast('Uploaded. ' + n + ' videos updated here; the shared dashboard rebuilds in a few minutes.' + (missing.length ? ' Missing columns: ' + missing.join(', ') + '.' : ''), 6000);
+  } catch (e) { msg.textContent = e.message || String(e); }
+  btn.disabled = false;
+});
 new ResizeObserver(debounce(() => { renderGrowth(); renderExplorer(); renderQuad(); if (state.selected) { const el = $('#chHist'); if (el) openVideo(state.selected); } }, 150)).observe(document.querySelector('main'));
 
 // ---------- boot ----------

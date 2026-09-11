@@ -16,9 +16,13 @@ Click-through rate and retention are private, so each of you exports your own ch
 4. With **+ metric**, add: Impressions, Impressions click-through rate, Average view duration, Average percentage viewed. (First time only.)
 5. Set the date range to **Lifetime**.
 6. Click the **Export** arrow → **.csv**. Unzip the download to find `Table data.csv`.
-7. On github.com open the repository, go to `data/studio/a` (Larry) or `data/studio/b` (Lamps), click **Add file → Upload files**, drop the CSV in, and click **Commit changes**.
+7. On the dashboard, click **Upload Studio CSV**, pick your channel and the file.
 
-The dashboard rebuilds within a few minutes. If you'd rather not upload it yourself, send the CSV to whoever manages the repository.
+The numbers show on your screen straight away, and the shared dashboard rebuilds within a few minutes.
+
+First time only: the upload dialog asks for a GitHub token so it can save the file to the repository (the dialog explains how to create one; about two minutes). Your browser remembers it. A friend uploading their own channel must first be added as a collaborator on the repository (Settings → Collaborators), then create their own token.
+
+If you'd rather not, you can still drop the CSV into `data/studio/a` or `data/studio/b` on github.com via Add file → Upload files.
 
 ## What updates when
 
