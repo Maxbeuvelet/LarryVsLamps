@@ -1,0 +1,969 @@
+<title>Larry vs Lamps</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f4f5f7; --surface:#ffffff; --raised:#f7f8fa; --ink:#131518; --ink-2:#4d5461; --muted:#828a97;
+  --line:#e4e7ec; --line-2:#cfd4dc; --shadow:0 1px 2px rgba(19,21,24,.06), 0 8px 24px rgba(19,21,24,.06);
+  --c-blue:#2a78d6; --c-orange:#eb6834; --c-aqua:#1baf7a;
+  --good:#0a7a0a; --warn:#b47600; --bad:#c43030; --good-bg:rgba(12,163,12,.12); --warn-bg:rgba(250,178,25,.16); --bad-bg:rgba(208,59,59,.12);
+  --a:var(--c-blue); --b:var(--c-orange);
+  --focus:0 0 0 3px rgba(42,120,214,.35);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#0f1114; --surface:#181b20; --raised:#20242b; --ink:#f1f3f6; --ink-2:#aeb5c0; --muted:#7c8491;
+    --line:#282d35; --line-2:#3a404a; --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+    --c-blue:#3987e5; --c-orange:#d95926; --c-aqua:#199e70;
+    --good:#2fbf2f; --warn:#fab219; --bad:#ef6a6a; --good-bg:rgba(12,163,12,.18); --warn-bg:rgba(250,178,25,.16); --bad-bg:rgba(208,59,59,.2);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#0f1114; --surface:#181b20; --raised:#20242b; --ink:#f1f3f6; --ink-2:#aeb5c0; --muted:#7c8491;
+  --line:#282d35; --line-2:#3a404a; --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  --c-blue:#3987e5; --c-orange:#d95926; --c-aqua:#199e70;
+  --good:#2fbf2f; --warn:#fab219; --bad:#ef6a6a; --good-bg:rgba(12,163,12,.18); --warn-bg:rgba(250,178,25,.16); --bad-bg:rgba(208,59,59,.2);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;padding-inline:clamp(16px,3vw,32px);padding-block:0 48px}
+h1,h2,h3{font-family:"Bricolage Grotesque","IBM Plex Sans",system-ui,sans-serif;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:17px;font-weight:700}
+h3{font-size:14px;font-weight:700}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:none;box-shadow:var(--focus)}
+a{color:inherit}
+.mono, .num{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:12px;margin-inline:calc(-1 * clamp(16px,3vw,32px));padding-inline:clamp(16px,3vw,32px);background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--a) 0 50%,var(--b) 50% 100%);position:relative;flex:none}
+.brand .mark::after{content:"";position:absolute;inset:0;background:var(--surface);clip-path:polygon(38% 30%,38% 70%,70% 50%)}
+.brand h1{font-size:20px;font-weight:800}
+.brand h1 em{font-style:normal;font-weight:500;color:var(--muted);margin-inline:4px}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:7px;padding:5px 11px;color:var(--ink-2);font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--raised);color:var(--ink);box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:9px;padding:7px 12px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--raised)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.primary:hover{opacity:.9;background:var(--ink)}
+.btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,transparent)}
+.btn.sm{padding:4px 9px;font-size:13px;border-radius:7px}
+.actions{display:flex;gap:8px}
+
+.banner{margin-top:14px;padding:10px 14px;border-radius:10px;background:var(--warn-bg);border:1px solid color-mix(in srgb,var(--warn) 45%,transparent);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner b{font-weight:600}
+.banner .spacer{flex:1}
+
+main{display:grid;gap:18px;margin-top:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.card-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.card-h p{margin:0;color:var(--muted);font-size:13px}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:18px}
+
+/* scoreboard */
+.score{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:stretch}
+.chan{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;padding:18px;border-radius:14px;background:var(--surface);border:1px solid var(--line);position:relative;overflow:hidden}
+.chan::before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--cc)}
+.chan.b{grid-template-columns:1fr auto;text-align:right}
+.chan.b::before{inset:0 0 0 auto}
+.chan.b .avatar{order:2}
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--cc);color:#fff;display:grid;place-items:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:24px;overflow:hidden;flex:none}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.chan .name{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:22px;line-height:1.1}
+.chan .handle{color:var(--muted);font-size:13px}
+.chan .big{font-size:40px;font-weight:600;line-height:1.05;margin-top:10px;letter-spacing:-.02em}
+.chan .big small{font-size:13px;font-weight:500;color:var(--muted);margin-left:6px;letter-spacing:0}
+.chan .delta{font-size:13px;color:var(--ink-2);margin-top:2px}
+.chan .delta b{color:var(--good);font-weight:600}
+.chan .mini{display:flex;gap:18px;margin-top:12px;font-size:13px;color:var(--ink-2);flex-wrap:wrap}
+.chan.b .mini{justify-content:flex-end}
+.chan .mini b{display:block;color:var(--ink);font-weight:600;font-size:15px}
+.vs{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding-inline:10px;min-width:120px;text-align:center}
+.vs .word{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:34px;color:var(--muted);line-height:1}
+.vs .lead{font-size:13px;color:var(--ink-2);max-width:150px}
+.vs .lead b{color:var(--ink)}
+.crown{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cc);vertical-align:middle;margin-right:4px}
+@media (max-width:760px){.score{grid-template-columns:1fr}.vs{flex-direction:row;justify-content:space-between;padding:4px 8px}.chan.b{grid-template-columns:auto 1fr;text-align:left}.chan.b .avatar{order:0}.chan.b .mini{justify-content:flex-start}.chan.b::before{inset:0 auto 0 0}}
+
+/* kpi versus rows */
+.vrows{display:grid;gap:10px}
+.vrow{display:grid;grid-template-columns:160px 90px 1fr 90px;gap:12px;align-items:center}
+.vrow .lbl{color:var(--ink-2);font-size:13px}
+.vrow .lbl small{display:block;color:var(--muted);font-size:11px}
+.vrow .va,.vrow .vb{font-weight:500;font-size:15px}
+.vrow .va{text-align:right}
+.vrow .lead{font-weight:600}
+.vrow .lead::after{content:"";display:inline-block;width:0;height:0;border:4px solid transparent;margin-left:6px;vertical-align:middle}
+.vrow .va.lead::after{border-left-color:var(--a);border-right:0;margin-left:6px}
+.vrow .vb.lead::before{content:"";display:inline-block;width:0;height:0;border:4px solid transparent;border-right-color:var(--b);border-left:0;margin-right:6px;vertical-align:middle}
+.vbar{display:flex;height:14px;gap:2px;border-radius:4px;overflow:hidden;background:var(--raised)}
+.vbar i{display:block;height:100%;transition:width .35s ease}
+.vbar .ia{background:var(--a);border-radius:4px 0 0 4px}
+.vbar .ib{background:var(--b);border-radius:0 4px 4px 0}
+.vrow .dash{color:var(--muted)}
+@media (max-width:640px){.vrow{grid-template-columns:1fr 1fr;grid-template-areas:"l l" "a b" "bar bar"}.vrow .lbl{grid-area:l}.vrow .va{grid-area:a;text-align:left}.vrow .vb{grid-area:b;text-align:right}.vrow .vbar{grid-area:bar}}
+
+/* legend & chart chrome */
+.legend{display:flex;gap:14px;font-size:12px;color:var(--ink-2);flex-wrap:wrap;align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:10px;height:10px;border-radius:50%;background:var(--cc);flex:none}
+.sw.line{width:14px;height:3px;border-radius:2px}
+.sw.diamond{transform:rotate(45deg);border-radius:2px}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:11px;fill:var(--muted)}
+.chart .grid line{stroke:var(--line);stroke-width:1}
+.chart .axis line{stroke:var(--line-2);stroke-width:1}
+.chart .endlbl{fill:var(--ink-2);font-weight:500;font-size:11px}
+.chart .ptlbl{fill:var(--ink-2);font-size:11px}
+.chart .qlbl{fill:var(--muted);font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+.chart .cross{stroke:var(--line-2);stroke-width:1}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.4;box-shadow:var(--shadow);max-width:240px;z-index:5;transform:translate(-50%,calc(-100% - 12px));white-space:nowrap}
+.tip .t{font-weight:600;margin-bottom:2px;white-space:normal}
+.tip .row{display:flex;gap:8px;justify-content:space-between}
+.tip .row i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.empty{padding:28px 12px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--line-2);border-radius:10px}
+
+/* leaderboard */
+.lb{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:12px}
+.lbi{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--raised);cursor:pointer;text-align:left;position:relative}
+.lbi:hover{border-color:var(--line-2)}
+.lbi .rank{position:absolute;top:-8px;left:-6px;background:var(--ink);color:var(--bg);font-weight:700;font-size:11px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-family:"Bricolage Grotesque",sans-serif}
+.thumb{width:72px;height:54px;border-radius:6px;background:linear-gradient(135deg,color-mix(in srgb,var(--cc) 70%,transparent),color-mix(in srgb,var(--cc) 25%,var(--surface)));display:grid;place-items:center;color:#fff;font-weight:700;overflow:hidden;flex:none;position:relative}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .dur{position:absolute;right:3px;bottom:3px;background:rgba(0,0,0,.75);color:#fff;font-size:10px;padding:1px 4px;border-radius:3px;font-variant-numeric:tabular-nums}
+.thumb.s{width:40px;height:54px}
+.lbi .ti{font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lbi .meta{color:var(--muted);font-size:12px;margin-top:4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.lbi .meta b{color:var(--ink);font-weight:600}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:500;background:var(--raised);color:var(--ink-2);border:1px solid var(--line);white-space:nowrap}
+.chip.good{background:var(--good-bg);color:var(--good);border-color:transparent}
+.chip.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.chip.bad{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.chip.hit{background:var(--ink);color:var(--bg);border-color:transparent}
+.chip.short{font-weight:600}
+
+/* explorer */
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.filters input[type=search]{border:1px solid var(--line-2);background:var(--surface);border-radius:9px;padding:6px 10px;min-width:180px}
+.filters label.tg{display:inline-flex;gap:6px;align-items:center;color:var(--ink-2);font-size:13px}
+.tablewrap{overflow-x:auto;margin-top:14px;border-top:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+th{color:var(--muted);font-weight:500;font-size:12px;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--surface)}
+th.on{color:var(--ink)}
+th.on::after{content:" ▾";font-size:10px}
+th.on.asc::after{content:" ▴"}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.vrowt{cursor:pointer}
+tr.vrowt:hover td{background:var(--raised)}
+td .title{display:flex;gap:10px;align-items:center;white-space:normal;min-width:260px;max-width:420px}
+td .title .thumb{width:48px;height:36px;font-size:11px}
+td .title .thumb.s{width:27px;height:36px}
+td .title span{line-height:1.3}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cc);margin-right:6px;vertical-align:middle}
+
+/* format matrix */
+.fm{display:grid;gap:16px}
+.fm .blk h3{margin-bottom:8px;color:var(--ink-2);font-weight:600;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase}
+.hb{display:grid;grid-template-columns:96px 1fr 64px;gap:10px;align-items:center;font-size:13px;margin-bottom:6px}
+.hb .lab{color:var(--ink-2);display:flex;align-items:center;gap:6px}
+.hb .lab small{color:var(--muted)}
+.hb .bar{height:12px;border-radius:0 4px 4px 0;background:var(--cc);min-width:2px;transition:width .35s}
+.hb .val{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+
+/* drawer */
+.drawer{position:fixed;inset:0 0 0 auto;width:min(520px,100%);background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow);z-index:40;transform:translateX(102%);transition:transform .25s ease;display:flex;flex-direction:column}
+.drawer.open{transform:none}
+.drawer header{display:flex;gap:10px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.drawer header h2{flex:1;font-size:15px}
+.drawer .body{padding:18px;overflow:auto;display:grid;gap:18px;align-content:start}
+.dthumb{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
+.dthumb .thumb{width:128px;height:96px;font-size:16px}
+.dthumb .thumb.s{width:72px;height:96px}
+.dthumb .t{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:17px;line-height:1.25}
+.dthumb .m{color:var(--muted);font-size:12.5px;margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--raised);border-radius:10px;padding:10px 12px}
+.stat .l{color:var(--muted);font-size:11.5px}
+.stat .v{font-weight:600;font-size:18px;margin-top:2px}
+.stat .d{font-size:11.5px;color:var(--ink-2)}
+.stat .d.up{color:var(--good)}.stat .d.dn{color:var(--bad)}
+.sig{display:grid;gap:8px}
+.sig li{list-style:none;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:9px 12px;border-radius:9px;background:var(--raised);border-left:3px solid var(--line-2)}
+.sig li.good{border-left-color:var(--good)}.sig li.warn{border-left-color:var(--warn)}.sig li.bad{border-left-color:var(--bad)}
+.sig li .ic{font-weight:700;width:18px;text-align:center;font-family:"Bricolage Grotesque",sans-serif}
+.sig li.good .ic{color:var(--good)}.sig li.warn .ic{color:var(--warn)}.sig li.bad .ic{color:var(--bad)}.sig li .ic{color:var(--muted)}
+.sig li b{font-weight:600}
+.sig li span{display:block;color:var(--ink-2);font-size:12.5px}
+.sig ul{margin:0;padding:0}
+.ai{border:1px solid var(--line);border-radius:10px;padding:12px}
+.ai .out{white-space:pre-wrap;font-size:13px;color:var(--ink-2);margin-top:10px;line-height:1.5}
+.ai .out:empty{display:none}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:35;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+
+/* dialogs */
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:0;width:min(640px,calc(100% - 32px));box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog .dh{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+dialog .dh h2{flex:1}
+dialog .db{padding:18px;display:grid;gap:14px}
+dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:transparent;padding:8px 12px;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.field{display:grid;gap:5px}
+.field label{font-size:12.5px;color:var(--ink-2);font-weight:500}
+.field input,.field select,.field textarea{border:1px solid var(--line-2);background:var(--bg);border-radius:8px;padding:7px 10px;width:100%}
+.field textarea{min-height:110px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.help{color:var(--muted);font-size:12.5px;margin:0}
+.help code{background:var(--raised);padding:1px 5px;border-radius:4px;font-size:11.5px}
+.help ol{margin:6px 0 0;padding-left:18px}
+.maprow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 10px;background:var(--raised);border-radius:8px;font-size:13px}
+.maprow select{border:1px solid var(--line-2);background:var(--surface);border-radius:7px;padding:4px 8px}
+.grid-form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:520px){.grid-form{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+.swatches{display:flex;gap:8px}
+.swatches button{width:26px;height:26px;border-radius:50%;border:2px solid transparent;background:var(--sc)}
+.swatches button[aria-pressed="true"]{border-color:var(--ink)}
+.status{margin-top:22px;color:var(--muted);font-size:12px;display:flex;gap:14px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:500;box-shadow:var(--shadow);z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.on{opacity:1}
+</style>
+
+<header class="top">
+  <div class="brand"><span class="mark" aria-hidden="true"></span><h1><span id="hName1">Larry</span><em>vs</em><span id="hName2">Lamps</span></h1></div>
+  <div class="seg" role="group" aria-label="Period" id="period">
+    <button data-p="7" aria-pressed="false">7 days</button>
+    <button data-p="28" aria-pressed="false">28 days</button>
+    <button data-p="90" aria-pressed="true">90 days</button>
+    <button data-p="0" aria-pressed="false">All time</button>
+  </div>
+  <div class="actions">
+    <button class="btn primary" id="btnImport">Import data</button>
+    <button class="btn" id="btnSettings">Settings</button>
+  </div>
+</header>
+
+<div class="banner" id="banner" hidden>
+  <b>Showing sample data.</b> <span>Import your channels to replace it with real numbers.</span>
+  <span class="spacer"></span>
+  <button class="btn sm" id="bannerImport">Import now</button>
+</div>
+
+<main>
+  <section class="score" id="score"></section>
+
+  <section class="card">
+    <div class="card-h"><h2>Head to head</h2><p id="kpiSub"></p></div>
+    <div class="vrows" id="vrows"></div>
+  </section>
+
+  <section class="grid-2">
+    <div class="card">
+      <div class="card-h"><h2>Subscribers over time</h2><div class="legend" id="lgSubs"></div></div>
+      <div class="chart" id="chSubs"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>Total views over time</h2><div class="legend" id="lgViews"></div></div>
+      <div class="chart" id="chViews"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><h2>Top videos this period</h2><p>Ranked by views across both channels. Click one to see why it worked.</p></div>
+    <div class="lb" id="leader"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><h2>Every video</h2><p>Each mark is one upload. Higher is more views; circles are long-form, diamonds are Shorts.</p></div>
+    <div class="filters">
+      <div class="seg" id="fChan"><button data-v="all" aria-pressed="true">Both</button><button data-v="a">A</button><button data-v="b">B</button></div>
+      <div class="seg" id="fFmt"><button data-v="all" aria-pressed="true">All formats</button><button data-v="long">Long-form</button><button data-v="short">Shorts</button></div>
+      <input type="search" id="fSearch" placeholder="Search titles" aria-label="Search titles">
+      <label class="tg"><input type="checkbox" id="fLog"> Log scale</label>
+    </div>
+    <div class="legend" id="lgScatter" style="margin-bottom:8px"></div>
+    <div class="chart" id="chScatter"></div>
+    <div class="tablewrap">
+      <table id="vtable">
+        <thead><tr>
+          <th data-k="title">Video</th>
+          <th data-k="publishedAt" class="on">Published</th>
+          <th data-k="format">Format</th>
+          <th data-k="views" class="num">Views</th>
+          <th data-k="likes" class="num">Likes</th>
+          <th data-k="likeRate" class="num">Like rate</th>
+          <th data-k="comments" class="num">Comments</th>
+          <th data-k="ctr" class="num">CTR</th>
+          <th data-k="avp" class="num">Avg viewed</th>
+          <th data-k="ratio">Verdict</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="grid-2">
+    <div class="card">
+      <div class="card-h"><h2>Shorts vs long-form</h2><p>Per channel, videos published in the period.</p></div>
+      <div class="fm" id="fmatrix"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>Packaging vs content</h2><p id="quadSub">Click-through rate against average percentage viewed, from YouTube Studio exports.</p></div>
+      <div class="legend" id="lgQuad" style="margin-bottom:8px"></div>
+      <div class="chart" id="chQuad"></div>
+    </div>
+  </section>
+</main>
+
+<div class="status" id="status"></div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Video details">
+  <header><h2>Video details</h2><button class="btn sm" id="drawerClose">Close</button></header>
+  <div class="body" id="drawerBody"></div>
+</aside>
+
+<dialog id="importDlg">
+  <div class="dh"><h2>Import data</h2><button class="btn sm" data-close>Close</button></div>
+  <div class="db">
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="json">YouTube data (JSON)</button>
+      <button role="tab" aria-selected="false" data-tab="csv">YouTube Studio CSV</button>
+    </div>
+    <div id="tab-json" class="tabpane" style="display:grid;gap:12px">
+      <p class="help">Open <code>youtube-sync.html</code> from the project folder, fetch both channels with your API key, then paste or choose the JSON it produces. Each import adds a point to the growth lines, so run it regularly (daily is ideal).</p>
+      <div class="field"><label for="jsonFile">JSON file</label><input type="file" id="jsonFile" accept=".json,application/json"></div>
+      <div class="field"><label for="jsonText">Or paste JSON</label><textarea id="jsonText" placeholder='{"version":1,"channels":[...]}'></textarea></div>
+      <div id="jsonMap" style="display:grid;gap:8px"></div>
+    </div>
+    <div id="tab-csv" class="tabpane" hidden style="display:grid;gap:12px">
+      <p class="help">In YouTube Studio: Analytics → Advanced mode → Content tab → add Impressions, Click-through rate, Average view duration and Average percentage viewed → Export → CSV. Import the <code>Table data.csv</code> here. Rows are matched to videos by video ID.</p>
+      <div class="grid-form">
+        <div class="field"><label for="csvFile">CSV file</label><input type="file" id="csvFile" accept=".csv,text/csv"></div>
+        <div class="field"><label for="csvChan">Channel</label><select id="csvChan"><option value="auto">Detect from video IDs</option><option value="a">A</option><option value="b">B</option></select></div>
+      </div>
+      <div id="csvPreview" class="help"></div>
+    </div>
+  </div>
+  <div class="df"><span class="help" id="importMsg" style="margin-right:auto"></span><button class="btn primary" id="importGo">Import</button></div>
+</dialog>
+
+<dialog id="settingsDlg">
+  <div class="dh"><h2>Settings</h2><button class="btn sm" data-close>Close</button></div>
+  <div class="db">
+    <div class="grid-form">
+      <div style="display:grid;gap:10px">
+        <h3>Channel A</h3>
+        <div class="field"><label for="sNameA">Display name</label><input id="sNameA"></div>
+        <div class="field"><label for="sHandleA">Handle</label><input id="sHandleA" placeholder="@handle"></div>
+        <div class="field"><label>Color</label><div class="swatches" id="swA"></div></div>
+      </div>
+      <div style="display:grid;gap:10px">
+        <h3>Channel B</h3>
+        <div class="field"><label for="sNameB">Display name</label><input id="sNameB"></div>
+        <div class="field"><label for="sHandleB">Handle</label><input id="sHandleB" placeholder="@handle"></div>
+        <div class="field"><label>Color</label><div class="swatches" id="swB"></div></div>
+      </div>
+    </div>
+    <div class="field"><label for="sShort">Treat videos up to this many seconds as Shorts</label><input id="sShort" type="number" min="15" max="300" step="5"></div>
+    <p class="help">YouTube's public data does not flag Shorts, so length is used as the rule. You can override any single video from its details panel.</p>
+  </div>
+  <div class="df"><button class="btn danger" id="clearAll" style="margin-right:auto">Delete all imported data</button><button class="btn primary" id="settingsSave">Save</button></div>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+// ---------- utilities ----------
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const DAY = 864e5;
+const dayStart = d => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
+const isoDay = d => { const x = new Date(d); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); };
+const parseDay = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const fmtN = n => n == null || isNaN(n) ? '—' : Math.abs(n) >= 1e6 ? (n/1e6).toFixed(n%1e6===0?0:1)+'M' : Math.abs(n) >= 1e4 ? (n/1e3).toFixed(1).replace(/\.0$/,'')+'K' : Math.round(n).toLocaleString();
+const fmtFull = n => n == null || isNaN(n) ? '—' : Math.round(n).toLocaleString();
+const fmtPct = (n, d=1) => n == null || isNaN(n) ? '—' : n.toFixed(d)+'%';
+const fmtDur = s => { if (s == null) return '—'; s = Math.round(s); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return (h?h+':':'')+(h?String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0'); };
+const fmtDate = d => new Date(d).toLocaleDateString(undefined, {month:'short', day:'numeric'});
+const fmtDateY = d => new Date(d).toLocaleDateString(undefined, {year:'numeric', month:'short', day:'numeric'});
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const median = a => { if (!a.length) return null; const s = [...a].sort((x,y)=>x-y); const m = s.length>>1; return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
+const mean = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : null;
+const sum = a => a.reduce((x,y)=>x+(y||0),0);
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const niceMax = v => { if (!v || v <= 0) return 10; const p = Math.pow(10, Math.floor(Math.log10(v))); const f = v/p; const n = f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10; return n*p; };
+const ticks = (max, n=4) => { const step = niceMax(max/n); const out=[]; for (let v=0; v<=max+step*0.001; v+=step) out.push(v); return out; };
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; };
+const COLORS = { blue:'var(--c-blue)', orange:'var(--c-orange)', aqua:'var(--c-aqua)' };
+const toast = (msg, ms=2600) => { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('on'), ms); };
+
+// ---------- state ----------
+const DEFAULT_CONFIG = { channels: { a:{name:'Larry', handle:'', color:'blue'}, b:{name:'Lamps', handle:'', color:'orange'} }, shortMax:180 };
+const state = {
+  config: structuredClone(DEFAULT_CONFIG),
+  channels: {},          // key -> {subs, views, videoCount, thumb, fetchedAt, history:[{d,subs,views}]}
+  videos: {},            // id -> video
+  sample: true,
+  period: 90,
+  filt: { chan:'all', fmt:'all', q:'', log:false },
+  sort: { k:'publishedAt', dir:'desc' },
+  mode: 'connecting',    // connecting | db | local
+  selected: null,
+};
+let db = null, sampleFn = null;
+
+// ---------- sample data ----------
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function makeSample(){
+  const R = mulberry32(20260911);
+  const today = dayStart(new Date());
+  const defs = {
+    a:{ start:118, conv:0.034, titles:[
+      'I built a standing desk out of scrap pallets','Why my 3D prints keep failing (fixed it)','Rating every energy drink at the gas station','24 hours with no phone','I tried the viral one-pan pasta','Cheapest mechanical keyboard on the internet','My room tour, finally','Cleaning a keyboard that has never been cleaned','Can you live on £1 a day?','I made a lamp out of a bowling ball','Learning to juggle in one week','Every mistake I made in my first month on YouTube'] },
+    b:{ start:104, conv:0.041, titles:[
+      'Restoring a 1970s brass desk lamp','Every lamp in my house, ranked','Thrift store lamp haul','The 40p lamp that outshines a £200 one','Rewiring a lamp for the first time','I turned a teapot into a lamp','Why IKEA lamps are secretly good','Smart bulbs: are they worth it?','Making a lava lamp from scratch','The ugliest lamp I could find','Lamp shade from an old map','Restoring a lamp my grandad made'] },
+  };
+  const videos = {}; const channels = {};
+  for (const key of ['a','b']) {
+    const D = defs[key]; let age = D.start, i = 0; const list = [];
+    while (age >= 0) {
+      const short = i % 3 === 1;
+      const base = short ? 1100 : 1500;
+      let views = Math.round(base * Math.exp((R()-0.5)*1.7) * (key==='a'?1.15:1) * Math.min(1, age/9 + 0.15));
+      if (key==='a' && i===5) views = 48200;
+      if (key==='b' && i===7) views = 9600;
+      if (key==='b' && i===3) views = 4300;
+      const durationSec = Math.round(short ? 22 + R()*38 : 300 + R()*720);
+      const pub = new Date(today.getTime() - age*DAY + Math.round((9 + R()*11)*3600e3));
+      const likeR = (short ? 0.045 : 0.03) + R()*0.03, comR = 0.0015 + R()*0.004;
+      const v = { id: 'smp_'+key+i, ch:key, title: D.titles[i % D.titles.length], publishedAt: pub.toISOString(), durationSec,
+        views, likes: Math.round(views*likeR), comments: Math.round(views*comR), thumb:null, history:[] };
+      const tau = short ? 4 : 9;
+      const g = t => t < 0 ? 0 : 1 - Math.exp(-t/tau);
+      const norm = g(age) || 1;
+      for (let k = 21; k >= 0; k--) { const t = age - k; if (t < 0) continue; const f = g(t)/norm; v.history.push({ d: isoDay(today.getTime()-k*DAY), views: Math.round(views*f), likes: Math.round(v.likes*f), comments: Math.round(v.comments*f) }); }
+      if (R() < 0.75) {
+        let ctr = 2.2 + R()*5.5; if (key==='a' && i===5) ctr = 11.4; if (key==='b' && i===7) ctr = 8.9; if (key==='b' && i===3) ctr = 3.1;
+        let avp = short ? 60 + R()*40 : 28 + R()*32; if (key==='b' && i===3) avp = 68; if (key==='a' && i===8) { ctr = 9.2; avp = 21; }
+        const avd = durationSec*avp/100;
+        v.studio = { impressions: Math.round(views/ctr*100), ctr: +ctr.toFixed(1), avp: +avp.toFixed(1), avd: Math.round(avd), watchHours: +(views*avd/3600).toFixed(1), subsGained: Math.round(views*(0.003+R()*0.008)), updatedAt: today.toISOString() };
+      }
+      v._g = g; v._norm = norm; v._age = age;
+      videos[v.id] = v; list.push(v);
+      age -= 4 + Math.floor(R()*5); i++;
+    }
+    const history = [];
+    for (let k = D.start; k >= 0; k--) {
+      let tv = 0; for (const v of list) { const t = v._age - k; tv += v.views * (v._g(t)/v._norm); }
+      const subs = Math.round(40 + tv*D.conv + Math.sin(k/7)*6);
+      history.push({ d: isoDay(today.getTime()-k*DAY), subs, views: Math.round(tv) });
+    }
+    for (const v of list) { delete v._g; delete v._norm; delete v._age; }
+    const last = history[history.length-1];
+    channels[key] = { subs: last.subs, views: last.views, videoCount: list.length, thumb:null, fetchedAt: today.toISOString(), history };
+  }
+  return { videos, channels };
+}
+
+// ---------- storage ----------
+const LS_KEY = 'lvl.data.v1';
+const store = {
+  applySample(){ const s = makeSample(); state.videos = s.videos; state.channels = s.channels; state.sample = true; },
+  loadLocal(){ try { const raw = localStorage.getItem(LS_KEY); if (!raw) return false; const d = JSON.parse(raw); if (d.config) state.config = Object.assign(structuredClone(DEFAULT_CONFIG), d.config); if (d.channels && Object.keys(d.channels).length) { state.channels = d.channels; state.videos = d.videos || {}; state.sample = false; return true; } } catch(e){} return false; },
+  persistLocal(){ if (db) return; try { localStorage.setItem(LS_KEY, JSON.stringify({ config: state.config, channels: state.channels, videos: state.videos })); } catch(e){} },
+  async saveConfig(cfg){ state.config = cfg; if (db) await db.doc('meta/config').set(cfg); else this.persistLocal(); },
+  async saveChannel(key, doc){ state.channels[key] = doc; if (db) await db.doc('channels/'+key).set(doc); else this.persistLocal(); },
+  async saveVideos(list){
+    for (const v of list) state.videos[v.id] = v;
+    if (db) { const q = [...list]; const worker = async () => { while (q.length) { const v = q.shift(); await db.doc('videos/'+v.id).set(v); } }; await Promise.all(Array.from({length:6}, worker)); }
+    else this.persistLocal();
+  },
+  async clearAll(){
+    if (db) { const ids = Object.keys(state.videos); const q=[...ids]; const worker = async()=>{ while(q.length){ await db.doc('videos/'+q.shift()).delete(); } }; await Promise.all(Array.from({length:6}, worker)); for (const k of Object.keys(state.channels)) await db.doc('channels/'+k).delete(); }
+    else { try { localStorage.removeItem(LS_KEY); } catch(e){} }
+    state.videos = {}; state.channels = {}; store.applySample(); render();
+  },
+  async connect(){
+    try { db = await claude.use('db'); } catch(e){ db = null; }
+    if (!db) { state.mode = 'local'; if (!this.loadLocal()) this.applySample(); applyConfig(); render(); return; }
+    state.mode = 'db';
+    let gotReal = false;
+    const takeReal = () => { if (!gotReal) { gotReal = true; state.sample = false; if (isSample()) { state.videos = {}; state.channels = {}; } } };
+    const isSample = () => Object.keys(state.videos).some(id => id.startsWith('smp_'));
+    db.doc('meta/config').onSnapshot(s => { if (s.exists) { state.config = Object.assign(structuredClone(DEFAULT_CONFIG), s.data()); applyConfig(); render(); } }, e => console.warn(e));
+    db.collection('channels').limit(50).onSnapshot(s => { if (s.empty) { render(); return; } takeReal(); state.channels = {}; s.docs.forEach(d => state.channels[d.id] = d.data()); render(); }, e => setStatusErr(e));
+    db.collection('videos').limit(1000).onSnapshot(s => { if (s.empty) { render(); return; } takeReal(); const vids = {}; s.docs.forEach(d => vids[d.id] = d.data()); state.videos = vids; render(); }, e => setStatusErr(e));
+    render();
+  }
+};
+function setStatusErr(e){ console.warn(e); toast('Shared storage error: ' + (e && e.message || e)); }
+
+// ---------- derived data ----------
+function cfgCh(k){ return state.config.channels[k] || { name: k.toUpperCase(), color: k==='a'?'blue':'orange' }; }
+function formatOf(v){ return v.formatOverride || ((v.durationSec ?? 9999) <= (state.config.shortMax || 180) ? 'short' : 'long'); }
+function periodSince(){ return state.period ? dayStart(Date.now() - state.period*DAY) : null; }
+function videosIn(chKey, since){ return Object.values(state.videos).filter(v => (!chKey || v.ch === chKey) && (!since || new Date(v.publishedAt) >= since)); }
+function likeRate(v){ return v.views ? v.likes/v.views*100 : null; }
+function histDelta(key, since, field){
+  const h = (state.channels[key]?.history || []).slice().sort((x,y)=>x.d<y.d?-1:1);
+  if (h.length < 2) return null;
+  const last = h[h.length-1];
+  if (!since) return last[field] - h[0][field];
+  const s = isoDay(since);
+  let base = null; for (const p of h) { if (p.d <= s) base = p; else break; }
+  if (!base) base = h[0];
+  if (base === last) return null;
+  return last[field] - base[field];
+}
+function chanSummary(key){
+  const since = periodSince(); const vids = videosIn(key, since); const c = state.channels[key] || {};
+  const views = sum(vids.map(v=>v.views)), likes = sum(vids.map(v=>v.likes)), comments = sum(vids.map(v=>v.comments));
+  return { key, subs: c.subs ?? null, totalViews: c.views ?? null, videoCount: c.videoCount ?? Object.values(state.videos).filter(v=>v.ch===key).length,
+    subsGained: histDelta(key, since, 'subs'), viewsGained: histDelta(key, since, 'views'), published: vids.length,
+    avgViews: vids.length ? views/vids.length : null, medianViews: median(vids.map(v=>v.views)), likeRate: views ? likes/views*100 : null, commentRate: views ? comments/views*1000 : null, vids };
+}
+function baseline(v){
+  const same = Object.values(state.videos).filter(x => x.ch === v.ch && x.id !== v.id);
+  const fmt = formatOf(v); const sameFmt = same.filter(x => formatOf(x) === fmt);
+  const pool = sameFmt.length >= 3 ? sameFmt : same;
+  const st = pool.filter(x => x.studio);
+  return { pool, medViews: median(pool.map(x=>x.views)), likeRate: mean(pool.map(likeRate).filter(x=>x!=null)), comRate: mean(pool.map(x=>x.views?x.comments/x.views*1000:null).filter(x=>x!=null)),
+    ctr: mean(st.map(x=>x.studio.ctr).filter(x=>x!=null)), avp: mean(st.map(x=>x.studio.avp).filter(x=>x!=null)), dur: mean(pool.map(x=>x.durationSec).filter(x=>x!=null)), sameFmtBased: sameFmt.length >= 3 };
+}
+function verdict(v){
+  const b = baseline(v); if (b.medViews == null || !b.pool.length) return { tag:'New', cls:'', ratio:null };
+  const r = v.views / (b.medViews || 1);
+  return r >= 2 ? { tag:'Hit', cls:'hit', ratio:r } : r >= 1.2 ? { tag:'Above usual', cls:'good', ratio:r } : r >= 0.8 ? { tag:'Typical', cls:'', ratio:r } : { tag:'Below usual', cls:'warn', ratio:r };
+}
+function signals(v){
+  const b = baseline(v); const out = []; const fmt = formatOf(v); const age = (Date.now() - new Date(v.publishedAt)) / DAY;
+  const vd = verdict(v);
+  if (vd.ratio != null) {
+    if (vd.ratio >= 2) out.push({ tone:'good', head:`${vd.ratio.toFixed(1)}× the channel's usual views`, body:`Median for ${b.sameFmtBased ? (fmt==='short'?'your Shorts':'your long-form videos') : 'your channel'} is ${fmtFull(b.medViews)}. This one broke out.` });
+    else if (vd.ratio >= 1.2) out.push({ tone:'good', head:`${vd.ratio.toFixed(1)}× the usual views`, body:`Above the median of ${fmtFull(b.medViews)} for comparable uploads.` });
+    else if (vd.ratio < 0.8) out.push({ tone:'warn', head:`${Math.round(vd.ratio*100)}% of the usual views`, body:`Median for comparable uploads is ${fmtFull(b.medViews)}.` });
+    else out.push({ tone:'info', head:'In line with the channel median', body:`Comparable uploads sit around ${fmtFull(b.medViews)} views.` });
+  } else out.push({ tone:'info', head:'No baseline yet', body:'Needs a few more uploads on this channel before it can be compared.' });
+  if (age < 7) out.push({ tone:'info', head:`Only ${Math.max(1,Math.round(age))} day${Math.round(age)===1?'':'s'} old`, body:'Views are still accumulating. Judge it again after a week.' });
+  const s = v.studio;
+  if (s && s.ctr != null && b.ctr != null) {
+    const rc = s.ctr / b.ctr;
+    const highCtr = rc >= 1.25, lowCtr = rc <= 0.75;
+    const ra = (s.avp != null && b.avp != null) ? s.avp / b.avp : null;
+    const highAvp = ra != null && ra >= 1.15, lowAvp = ra != null && ra <= 0.8;
+    if (highCtr && lowAvp) out.push({ tone:'warn', head:'Clicks, but viewers left early', body:`CTR ${fmtPct(s.ctr)} vs your usual ${fmtPct(b.ctr)}, but only ${fmtPct(s.avp,0)} watched vs usual ${fmtPct(b.avp,0)}. The title and thumbnail promised more than the video delivered.` });
+    else if (lowCtr && highAvp) out.push({ tone:'warn', head:'Hidden gem: loved by the few who clicked', body:`${fmtPct(s.avp,0)} average viewed (usual ${fmtPct(b.avp,0)}) but CTR only ${fmtPct(s.ctr)} (usual ${fmtPct(b.ctr)}). A new thumbnail or title could unlock it.` });
+    else {
+      if (highCtr) out.push({ tone:'good', head:'Thumbnail and title pulled clicks', body:`CTR ${fmtPct(s.ctr)} against your usual ${fmtPct(b.ctr)} from ${fmtFull(s.impressions)} impressions.` });
+      if (lowCtr) out.push({ tone:'bad', head:'Packaging held it back', body:`CTR ${fmtPct(s.ctr)} against your usual ${fmtPct(b.ctr)}. YouTube showed it ${fmtFull(s.impressions)} times but few clicked.` });
+      if (highAvp) out.push({ tone:'good', head:'Viewers stayed', body:`${fmtPct(s.avp,0)} average viewed vs usual ${fmtPct(b.avp,0)}. Strong retention tells YouTube to keep recommending it.` });
+      if (lowAvp) out.push({ tone:'bad', head:'Viewers dropped off early', body:`${fmtPct(s.avp,0)} average viewed vs usual ${fmtPct(b.avp,0)}. Look at where the retention graph dips in Studio.` });
+    }
+    if (s.impressions && b.pool.some(x=>x.studio?.impressions)) { const mi = median(b.pool.map(x=>x.studio?.impressions).filter(Boolean)); if (mi && s.impressions/mi >= 2) out.push({ tone:'good', head:'YouTube pushed it hard', body:`${fmtFull(s.impressions)} impressions, ${(s.impressions/mi).toFixed(1)}× the usual. Recommendations kicked in.` }); }
+  } else if (!s) out.push({ tone:'info', head:'No Studio data for this video yet', body:'Import a YouTube Studio CSV to see click-through rate and retention, the two numbers that explain most hits.' });
+  const lr = likeRate(v);
+  if (lr != null && b.likeRate != null) { const r = lr / b.likeRate; if (r >= 1.3) out.push({ tone:'good', head:'People liked it more than usual', body:`${fmtPct(lr)} like rate vs your usual ${fmtPct(b.likeRate)}.` }); else if (r <= 0.7) out.push({ tone:'warn', head:'Lower like rate than usual', body:`${fmtPct(lr)} vs your usual ${fmtPct(b.likeRate)}. Views came but the reaction was flat.` }); }
+  if (v.views && b.comRate != null) { const cr = v.comments/v.views*1000; if (cr/b.comRate >= 1.5 && v.comments >= 5) out.push({ tone:'good', head:'Sparked conversation', body:`${cr.toFixed(1)} comments per 1,000 views vs usual ${b.comRate.toFixed(1)}. Reply to them; it feeds the algorithm.` }); }
+  if (v.durationSec && b.dur && fmt === 'long') { const r = v.durationSec / b.dur; if (r >= 1.4) out.push({ tone:'info', head:'Longer than your usual', body:`${fmtDur(v.durationSec)} vs average ${fmtDur(b.dur)}.` }); else if (r <= 0.6) out.push({ tone:'info', head:'Shorter than your usual', body:`${fmtDur(v.durationSec)} vs average ${fmtDur(b.dur)}.` }); }
+  const d = new Date(v.publishedAt);
+  out.push({ tone:'info', head:`Posted ${d.toLocaleDateString(undefined,{weekday:'long'})} at ${d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}`, body:`${fmt==='short'?'Short':'Long-form'}, ${fmtDur(v.durationSec)}. Title is ${(v.title||'').length} characters${(v.title||'').length > 60 ? ', long enough to get cut off in feeds' : ''}.` });
+  return out;
+}
+
+// ---------- charts ----------
+function chartTip(host){ let t = host.querySelector('.tip'); if (!t) { t = document.createElement('div'); t.className = 'tip'; t.hidden = true; host.appendChild(t); } return t; }
+function chanColor(k){ return `var(--${k})`; }
+
+function drawLines(host, series, opts){
+  host.innerHTML = '';
+  const pts = series.flatMap(s => s.points);
+  if (!pts.length || series.every(s => s.points.length < 2)) { host.innerHTML = `<div class="empty">${esc(opts.empty || 'Not enough history yet. Each import adds a point to this line.')}</div>`; return; }
+  const W = Math.max(280, host.clientWidth || 600), H = 230, padL = 46, padR = 62, padT = 14, padB = 26;
+  const xs = pts.map(p=>p.x), x0 = opts.x0 ?? Math.min(...xs), x1 = Math.max(...xs, x0 + DAY);
+  const ymax = niceMax(Math.max(...pts.map(p=>p.y), 1) * 1.05);
+  const X = x => padL + (x - x0)/(x1 - x0) * (W - padL - padR), Y = y => padT + (1 - y/ymax) * (H - padT - padB);
+  const yt = ticks(ymax, 4);
+  const nDays = (x1 - x0)/DAY; const xt = []; const step = nDays > 200 ? 60 : nDays > 90 ? 30 : nDays > 40 ? 14 : nDays > 12 ? 7 : 1;
+  for (let t = dayStart(x1).getTime(); t >= x0; t -= step*DAY) xt.unshift(t);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`;
+  svg += `<g class="grid">${yt.map(v=>`<line x1="${padL}" x2="${W-padR}" y1="${Y(v)}" y2="${Y(v)}"/>`).join('')}</g>`;
+  svg += `<g class="axis"><line x1="${padL}" x2="${W-padR}" y1="${Y(0)}" y2="${Y(0)}"/></g>`;
+  svg += yt.map(v=>`<text x="${padL-8}" y="${Y(v)+4}" text-anchor="end">${fmtN(v)}</text>`).join('');
+  svg += xt.map(t=>`<text x="${X(t)}" y="${H-6}" text-anchor="middle">${fmtDate(t)}</text>`).join('');
+  const ends = [];
+  series.forEach(s => {
+    if (!s.points.length) return;
+    const p = s.points.map(q=>`${X(q.x).toFixed(1)},${Y(q.y).toFixed(1)}`);
+    const last = s.points[s.points.length-1];
+    svg += `<path d="M${p.join('L')}L${X(last.x).toFixed(1)},${Y(0)}L${X(s.points[0].x).toFixed(1)},${Y(0)}Z" fill="${s.color}" opacity=".1"/>`;
+    svg += `<path d="M${p.join('L')}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    ends.push({ s, x: X(last.x), y: Y(last.y), v: last.y });
+  });
+  ends.sort((a,b)=>a.y-b.y);
+  for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i-1].y < 14) ends[i].ly = ends[i-1].ly != null ? ends[i-1].ly + 14 : ends[i-1].y + 14;
+  ends.forEach(e => { const ly = e.ly ?? e.y; svg += `<circle cx="${e.x}" cy="${e.y}" r="4.5" fill="${e.s.color}" stroke="var(--surface)" stroke-width="2"/><text class="endlbl" x="${e.x+8}" y="${ly+4}">${fmtN(e.v)}</text>`; });
+  svg += `<g id="hov"></g><rect x="${padL}" y="${padT}" width="${W-padL-padR}" height="${H-padT-padB}" fill="transparent" class="hit"/></svg>`;
+  host.innerHTML = svg;
+  const tip = chartTip(host), hov = host.querySelector('#hov'), hit = host.querySelector('.hit');
+  const all = [...new Set(pts.map(p=>p.x))].sort((a,b)=>a-b);
+  const move = ev => {
+    const r = host.getBoundingClientRect(); const px = (ev.clientX - r.left) * (W / r.width);
+    const tx = x0 + (px - padL)/(W-padL-padR)*(x1-x0);
+    let best = all[0]; for (const t of all) if (Math.abs(t-tx) < Math.abs(best-tx)) best = t;
+    let rows = '', dots = '';
+    series.forEach(s => { let q = null; for (const p of s.points) if (!q || Math.abs(p.x-best) < Math.abs(q.x-best)) q = p; if (q && Math.abs(q.x-best) <= DAY) { rows += `<div class="row"><span><i style="background:${s.color}"></i>${esc(s.name)}</span><b>${fmtFull(q.y)}</b></div>`; dots += `<circle cx="${X(q.x)}" cy="${Y(q.y)}" r="4.5" fill="${s.color}" stroke="var(--surface)" stroke-width="2"/>`; } });
+    hov.innerHTML = `<line class="cross" x1="${X(best)}" x2="${X(best)}" y1="${padT}" y2="${H-padB}"/>${dots}`;
+    tip.innerHTML = `<div class="t">${fmtDateY(best)}</div>${rows}`; tip.hidden = false;
+    tip.style.left = (X(best) * r.width / W) + 'px'; tip.style.top = (padT * r.height / H) + 'px';
+  };
+  hit.addEventListener('mousemove', move); hit.addEventListener('mouseleave', () => { tip.hidden = true; hov.innerHTML = ''; });
+}
+
+function drawScatter(host, points, opts){
+  host.innerHTML = '';
+  if (!points.length) { host.innerHTML = '<div class="empty">No videos in this period match the filters.</div>'; return; }
+  const W = Math.max(280, host.clientWidth || 600), H = 260, padL = 46, padR = 20, padT = 18, padB = 26;
+  const log = opts.log;
+  const xs = points.map(p=>p.x); const x0 = opts.x0 ?? Math.min(...xs) - DAY, x1 = Date.now() + DAY;
+  const vmax = Math.max(...points.map(p=>p.y), 10);
+  const ymax = log ? Math.pow(10, Math.ceil(Math.log10(vmax))) : niceMax(vmax*1.08);
+  const yv = v => log ? Math.log10(v+1)/Math.log10(ymax+1) : v/ymax;
+  const X = x => padL + (x - x0)/(x1 - x0) * (W - padL - padR), Y = v => padT + (1 - yv(v)) * (H - padT - padB);
+  const yt = log ? Array.from({length: Math.round(Math.log10(ymax))+1}, (_,i)=>i===0?0:Math.pow(10,i)) : ticks(ymax, 4);
+  const nDays = (x1 - x0)/DAY; const xt = []; const step = nDays > 200 ? 60 : nDays > 90 ? 30 : nDays > 40 ? 14 : nDays > 12 ? 7 : 1;
+  for (let t = dayStart(x1).getTime(); t >= x0; t -= step*DAY) xt.unshift(t);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`;
+  svg += `<g class="grid">${yt.map(v=>`<line x1="${padL}" x2="${W-padR}" y1="${Y(v)}" y2="${Y(v)}"/>`).join('')}</g>`;
+  svg += `<g class="axis"><line x1="${padL}" x2="${W-padR}" y1="${Y(0)}" y2="${Y(0)}"/></g>`;
+  svg += yt.map(v=>`<text x="${padL-8}" y="${Y(v)+4}" text-anchor="end">${fmtN(v)}</text>`).join('');
+  svg += xt.map(t=>`<text x="${X(t)}" y="${H-6}" text-anchor="middle">${fmtDate(t)}</text>`).join('');
+  const sorted = [...points].sort((a,b)=>b.y-a.y); const labelled = new Set(sorted.slice(0,3).map(p=>p.v.id));
+  points.forEach((p,i) => {
+    const cx = X(p.x), cy = Y(p.y), c = chanColor(p.v.ch);
+    svg += p.short ? `<rect data-i="${i}" class="mk" x="${cx-5}" y="${cy-5}" width="10" height="10" transform="rotate(45 ${cx} ${cy})" fill="${c}" stroke="var(--surface)" stroke-width="2"/>`
+                   : `<circle data-i="${i}" class="mk" cx="${cx}" cy="${cy}" r="5.5" fill="${c}" stroke="var(--surface)" stroke-width="2"/>`;
+    if (labelled.has(p.v.id)) { const t = p.v.title.length > 28 ? p.v.title.slice(0,27)+'…' : p.v.title; const right = cx < W*0.6; svg += `<text class="ptlbl" x="${right?cx+9:cx-9}" y="${cy+4}" text-anchor="${right?'start':'end'}">${esc(t)}</text>`; }
+  });
+  svg += '</svg>';
+  host.innerHTML = svg;
+  const tip = chartTip(host); const el = host.querySelector('svg');
+  el.addEventListener('mousemove', ev => {
+    const m = ev.target.closest('.mk'); if (!m) { tip.hidden = true; return; }
+    const p = points[+m.dataset.i]; const r = host.getBoundingClientRect(); const bb = m.getBoundingClientRect();
+    tip.innerHTML = `<div class="t">${esc(p.v.title)}</div><div class="row"><span><i style="background:${chanColor(p.v.ch)}"></i>${esc(cfgCh(p.v.ch).name)}</span><span>${p.short?'Short':'Long-form'} · ${fmtDur(p.v.durationSec)}</span></div><div class="row"><span>Views</span><b>${fmtFull(p.y)}</b></div><div class="row"><span>Published</span><span>${fmtDateY(p.x)}</span></div>`;
+    tip.hidden = false; tip.style.left = (bb.left + bb.width/2 - r.left) + 'px'; tip.style.top = (bb.top - r.top) + 'px';
+  });
+  el.addEventListener('mouseleave', () => tip.hidden = true);
+  el.addEventListener('click', ev => { const m = ev.target.closest('.mk'); if (m) openVideo(points[+m.dataset.i].v.id); });
+  el.style.cursor = 'pointer';
+}
+
+function drawQuadrant(host, points){
+  host.innerHTML = '';
+  if (points.length < 2) { host.innerHTML = '<div class="empty">Import a YouTube Studio CSV for either channel and this chart fills in.</div>'; return; }
+  const W = Math.max(280, host.clientWidth || 600), H = 260, padL = 40, padR = 16, padT = 22, padB = 30;
+  const xmax = niceMax(Math.max(...points.map(p=>p.x))*1.15), ymax = Math.min(100, niceMax(Math.max(...points.map(p=>p.y))*1.1));
+  const X = v => padL + v/xmax*(W-padL-padR), Y = v => padT + (1 - v/ymax)*(H-padT-padB);
+  const mx = median(points.map(p=>p.x)), my = median(points.map(p=>p.y));
+  const xt = ticks(xmax, 4), yt = ticks(ymax, 4);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`;
+  svg += `<g class="grid">${yt.map(v=>`<line x1="${padL}" x2="${W-padR}" y1="${Y(v)}" y2="${Y(v)}"/>`).join('')}${xt.map(v=>`<line y1="${padT}" y2="${H-padB}" x1="${X(v)}" x2="${X(v)}"/>`).join('')}</g>`;
+  svg += `<g class="axis"><line x1="${X(mx)}" x2="${X(mx)}" y1="${padT}" y2="${H-padB}"/><line x1="${padL}" x2="${W-padR}" y1="${Y(my)}" y2="${Y(my)}"/></g>`;
+  svg += yt.map(v=>`<text x="${padL-8}" y="${Y(v)+4}" text-anchor="end">${v}%</text>`).join('');
+  svg += xt.map(v=>`<text x="${X(v)}" y="${H-8}" text-anchor="middle">${v}%</text>`).join('');
+  svg += `<text class="qlbl" x="${W-padR-4}" y="${padT-8}" text-anchor="end">Clicked and watched</text><text class="qlbl" x="${padL+4}" y="${padT-8}">Loved by few</text><text class="qlbl" x="${W-padR-4}" y="${H-padB-6}" text-anchor="end">Clicked, then left</text><text class="qlbl" x="${padL+4}" y="${H-padB-6}">Needs new packaging</text>`;
+  svg += `<text x="${W-padR}" y="${H-padB+22}" text-anchor="end">CTR →</text><text transform="rotate(-90 12 ${H/2})" x="12" y="${H/2}" text-anchor="middle">Avg % viewed →</text>`;
+  points.forEach((p,i) => { const cx = X(p.x), cy = Y(p.y), c = chanColor(p.v.ch); svg += p.short ? `<rect data-i="${i}" class="mk" x="${cx-5}" y="${cy-5}" width="10" height="10" transform="rotate(45 ${cx} ${cy})" fill="${c}" stroke="var(--surface)" stroke-width="2"/>` : `<circle data-i="${i}" class="mk" cx="${cx}" cy="${cy}" r="5.5" fill="${c}" stroke="var(--surface)" stroke-width="2"/>`; });
+  svg += '</svg>';
+  host.innerHTML = svg;
+  const tip = chartTip(host); const el = host.querySelector('svg');
+  el.addEventListener('mousemove', ev => { const m = ev.target.closest('.mk'); if (!m) { tip.hidden = true; return; } const p = points[+m.dataset.i]; const r = host.getBoundingClientRect(); const bb = m.getBoundingClientRect();
+    tip.innerHTML = `<div class="t">${esc(p.v.title)}</div><div class="row"><span><i style="background:${chanColor(p.v.ch)}"></i>${esc(cfgCh(p.v.ch).name)}</span><span>${fmtFull(p.v.views)} views</span></div><div class="row"><span>CTR</span><b>${fmtPct(p.x)}</b></div><div class="row"><span>Avg viewed</span><b>${fmtPct(p.y,0)}</b></div>`;
+    tip.hidden = false; tip.style.left = (bb.left + bb.width/2 - r.left) + 'px'; tip.style.top = (bb.top - r.top) + 'px'; });
+  el.addEventListener('mouseleave', () => tip.hidden = true);
+  el.addEventListener('click', ev => { const m = ev.target.closest('.mk'); if (m) openVideo(points[+m.dataset.i].v.id); });
+  el.style.cursor = 'pointer';
+}
+
+// ---------- rendering ----------
+function applyConfig(){
+  const root = document.documentElement;
+  root.style.setProperty('--a', COLORS[cfgCh('a').color] || COLORS.blue);
+  root.style.setProperty('--b', COLORS[cfgCh('b').color] || COLORS.orange);
+  $('#hName1').textContent = cfgCh('a').name; $('#hName2').textContent = cfgCh('b').name;
+  document.title = `${cfgCh('a').name} vs ${cfgCh('b').name}`;
+  $$('#fChan button[data-v="a"]').forEach(b => b.textContent = cfgCh('a').name); $$('#fChan button[data-v="b"]').forEach(b => b.textContent = cfgCh('b').name);
+  $('#csvChan option[value="a"]').textContent = cfgCh('a').name; $('#csvChan option[value="b"]').textContent = cfgCh('b').name;
+}
+function legendHTML(extra){ return `<span><i class="sw" style="--cc:var(--a)"></i>${esc(cfgCh('a').name)}</span><span><i class="sw" style="--cc:var(--b)"></i>${esc(cfgCh('b').name)}</span>${extra||''}`; }
+function thumbHTML(v, cls){ const short = formatOf(v)==='short'; return `<div class="thumb ${short?'s':''} ${cls||''}" style="--cc:var(--${v.ch})">${v.thumb ? `<img src="${esc(v.thumb)}" alt="">` : `<span>${esc(cfgCh(v.ch).name.slice(0,1))}</span>`}<span class="dur">${fmtDur(v.durationSec)}</span></div>`; }
+function periodLabel(){ return state.period ? `last ${state.period} days` : 'all time'; }
+
+function render(){
+  $('#banner').hidden = !state.sample;
+  renderScore(); renderKpis(); renderGrowth(); renderLeader(); renderExplorer(); renderFormat(); renderQuad(); renderStatus();
+}
+function renderScore(){
+  const A = chanSummary('a'), B = chanSummary('b');
+  const card = (S, k) => { const c = cfgCh(k); const ch = state.channels[k] || {}; return `<div class="chan ${k}" style="--cc:var(--${k})">
+    <div class="avatar">${ch.thumb ? `<img src="${esc(ch.thumb)}" alt="">` : esc(c.name.slice(0,1))}</div>
+    <div><div class="name">${esc(c.name)}</div><div class="handle">${c.handle ? esc(c.handle.startsWith('@')?c.handle:'@'+c.handle) : 'No handle set'}</div>
+      <div class="big">${fmtN(S.subs)}<small>subscribers</small></div>
+      <div class="delta">${S.subsGained != null ? `<b>${S.subsGained>=0?'+':''}${fmtFull(S.subsGained)}</b> ${periodLabel()}` : 'Import again later to track growth'}</div>
+      <div class="mini"><span><b>${fmtN(S.totalViews)}</b>total views</span><span><b>${fmtFull(S.videoCount)}</b>videos</span><span><b>${fmtN(S.avgViews)}</b>avg views, ${periodLabel()}</span></div>
+    </div></div>`; };
+  const metrics = [['subs',A.subs,B.subs],['viewsGained',A.viewsGained,B.viewsGained],['published',A.published,B.published],['avgViews',A.avgViews,B.avgViews],['likeRate',A.likeRate,B.likeRate]];
+  let wa = 0, wb = 0, n = 0; metrics.forEach(([,x,y]) => { if (x != null && y != null && x !== y) { n++; if (x > y) wa++; else wb++; } });
+  const lead = n === 0 ? 'Not enough data to call it yet' : wa === wb ? `<b>Dead heat</b> on ${n} metrics` : `<span class="crown" style="--cc:var(--${wa>wb?'a':'b'})"></span><b>${esc(cfgCh(wa>wb?'a':'b').name)}</b> leads ${Math.max(wa,wb)} of ${n} metrics`;
+  $('#score').innerHTML = card(A,'a') + `<div class="vs"><div class="word">vs</div><div class="lead">${lead}</div></div>` + card(B,'b');
+}
+function renderKpis(){
+  const A = chanSummary('a'), B = chanSummary('b');
+  $('#kpiSub').textContent = `Bars show each channel's share. ${periodLabel()[0].toUpperCase()+periodLabel().slice(1)} where a period applies.`;
+  const rows = [
+    ['Subscribers','now', A.subs, B.subs, fmtN],
+    ['Subscribers gained', periodLabel(), A.subsGained, B.subsGained, x=>x==null?'—':(x>=0?'+':'')+fmtN(x)],
+    ['Views gained', periodLabel(), A.viewsGained, B.viewsGained, x=>x==null?'—':(x>=0?'+':'')+fmtN(x)],
+    ['Videos published', periodLabel(), A.published, B.published, fmtFull],
+    ['Average views per video', periodLabel(), A.avgViews, B.avgViews, fmtN],
+    ['Median views per video', periodLabel(), A.medianViews, B.medianViews, fmtN],
+    ['Like rate','likes per 100 views', A.likeRate, B.likeRate, x=>fmtPct(x,2)],
+    ['Comments per 1,000 views', periodLabel(), A.commentRate, B.commentRate, x=>x==null?'—':x.toFixed(1)],
+  ];
+  $('#vrows').innerHTML = rows.map(([l, s, a, b, f]) => {
+    const has = a != null && b != null && (a + b) > 0; const pa = has ? a/(a+b)*100 : 50;
+    const la = has && a > b, lb = has && b > a;
+    return `<div class="vrow"><div class="lbl">${esc(l)}<small>${esc(s)}</small></div><div class="va num ${la?'lead':''}">${f(a)}</div>
+      <div class="vbar" aria-hidden="true">${has ? `<i class="ia" style="width:${pa}%"></i><i class="ib" style="width:${100-pa}%"></i>` : ''}</div>
+      <div class="vb num ${lb?'lead':''}">${f(b)}</div></div>`; }).join('');
+}
+function renderGrowth(){
+  const since = periodSince();
+  const ser = field => ['a','b'].map(k => { const h = (state.channels[k]?.history || []).slice().sort((x,y)=>x.d<y.d?-1:1); let pts = h.map(p => ({ x: parseDay(p.d).getTime(), y: p[field] })); if (since) { const s = since.getTime(); const before = pts.filter(p=>p.x < s); pts = pts.filter(p=>p.x >= s); if (before.length) pts.unshift(before[before.length-1]); } return { name: cfgCh(k).name, color: chanColor(k), points: pts }; });
+  $('#lgSubs').innerHTML = legendHTML(); $('#lgViews').innerHTML = legendHTML();
+  const x0 = since ? since.getTime() : undefined;
+  drawLines($('#chSubs'), ser('subs'), { x0 }); drawLines($('#chViews'), ser('views'), { x0 });
+}
+function renderLeader(){
+  const vids = videosIn(null, periodSince()).sort((a,b)=>b.views-a.views).slice(0,6);
+  $('#leader').innerHTML = vids.length ? vids.map((v,i) => { const vd = verdict(v); return `<button class="lbi" data-id="${esc(v.id)}"><span class="rank">${i+1}</span>${thumbHTML(v)}<div><div class="ti">${esc(v.title)}</div><div class="meta"><span class="dot" style="--cc:var(--${v.ch})"></span><b>${fmtN(v.views)}</b> views${vd.ratio!=null?` · ${vd.ratio.toFixed(1)}× usual`:''}${v.studio?.ctr!=null?` · CTR ${fmtPct(v.studio.ctr)}`:''}</div></div></button>`; }).join('') : '<div class="empty">No videos published in this period.</div>';
+}
+function tableRows(){
+  const since = periodSince(); const q = state.filt.q.trim().toLowerCase();
+  let list = Object.values(state.videos).filter(v => (!since || new Date(v.publishedAt) >= since) && (state.filt.chan === 'all' || v.ch === state.filt.chan) && (state.filt.fmt === 'all' || formatOf(v) === state.filt.fmt) && (!q || (v.title||'').toLowerCase().includes(q)));
+  const key = state.sort.k; const val = v => key === 'likeRate' ? likeRate(v) : key === 'ctr' ? v.studio?.ctr : key === 'avp' ? v.studio?.avp : key === 'ratio' ? verdict(v).ratio : key === 'format' ? formatOf(v) : key === 'publishedAt' ? new Date(v.publishedAt).getTime() : v[key];
+  list.sort((a,b) => { const x = val(a), y = val(b); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; const c = typeof x === 'string' ? x.localeCompare(y) : x - y; return state.sort.dir === 'asc' ? c : -c; });
+  return list;
+}
+function renderExplorer(){
+  const list = tableRows();
+  $('#lgScatter').innerHTML = legendHTML(`<span><i class="sw" style="--cc:var(--muted)"></i>Long-form</span><span><i class="sw diamond" style="--cc:var(--muted)"></i>Short</span>`);
+  const since = periodSince();
+  drawScatter($('#chScatter'), list.map(v => ({ x: new Date(v.publishedAt).getTime(), y: v.views, short: formatOf(v)==='short', v })), { log: state.filt.log, x0: since ? since.getTime() : undefined });
+  $$('#vtable th').forEach(th => { th.classList.toggle('on', th.dataset.k === state.sort.k); th.classList.toggle('asc', th.dataset.k === state.sort.k && state.sort.dir === 'asc'); });
+  $('#vtable tbody').innerHTML = list.map(v => { const vd = verdict(v); const f = formatOf(v); return `<tr class="vrowt" data-id="${esc(v.id)}">
+    <td><div class="title">${thumbHTML(v)}<span><span class="dot" style="--cc:var(--${v.ch})"></span>${esc(v.title)}</span></div></td>
+    <td class="num">${fmtDateY(v.publishedAt)}</td>
+    <td><span class="chip ${f==='short'?'short':''}">${f==='short'?'Short':'Long'}</span></td>
+    <td class="num">${fmtFull(v.views)}</td><td class="num">${fmtFull(v.likes)}</td><td class="num">${fmtPct(likeRate(v),2)}</td><td class="num">${fmtFull(v.comments)}</td>
+    <td class="num">${fmtPct(v.studio?.ctr)}</td><td class="num">${fmtPct(v.studio?.avp,0)}</td>
+    <td><span class="chip ${vd.cls}">${vd.tag}${vd.ratio!=null?` ${vd.ratio.toFixed(1)}×`:''}</span></td></tr>`; }).join('') || `<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">No videos match.</td></tr>`;
+}
+function renderFormat(){
+  const since = periodSince();
+  const blocks = [['Average views', v => v.views, x => fmtN(x)], ['Like rate', v => likeRate(v), x => fmtPct(x,2)], ['Uploads', null, x => fmtFull(x)]];
+  const cells = {}; let maxes = {};
+  for (const k of ['a','b']) for (const f of ['long','short']) { const vids = videosIn(k, since).filter(v => formatOf(v) === f); cells[k+f] = { n: vids.length, views: mean(vids.map(v=>v.views)), like: mean(vids.map(likeRate).filter(x=>x!=null)) }; }
+  const html = blocks.map(([label, , fmt], bi) => {
+    const get = c => bi === 0 ? c.views : bi === 1 ? c.like : c.n; const max = Math.max(...Object.values(cells).map(c => get(c) || 0), 1e-9);
+    return `<div class="blk"><h3>${label}</h3>${['long','short'].map(f => ['a','b'].map(k => { const c = cells[k+f]; const v = get(c); return `<div class="hb"><div class="lab"><span class="dot" style="--cc:var(--${k})"></span>${f==='long'?'Long-form':'Shorts'} <small>${esc(cfgCh(k).name.slice(0,6))}</small></div><div><div class="bar" style="--cc:var(--${k});width:${v?clamp(v/max*100,1,100):0}%"></div></div><div class="val">${v==null?'—':fmt(v)}</div></div>`; }).join('')).join('')}</div>`; }).join('');
+  $('#fmatrix').innerHTML = html;
+}
+function renderQuad(){
+  const since = periodSince();
+  const pts = videosIn(null, since).filter(v => v.studio && v.studio.ctr != null && v.studio.avp != null).map(v => ({ x: v.studio.ctr, y: v.studio.avp, short: formatOf(v)==='short', v }));
+  $('#lgQuad').innerHTML = legendHTML(); drawQuadrant($('#chQuad'), pts);
+}
+function renderStatus(){
+  const parts = [];
+  parts.push(state.mode === 'db' ? 'Shared storage connected: you and your friend see the same data.' : state.mode === 'local' ? 'Shared storage unavailable here: data is kept in this browser only.' : 'Connecting to shared storage…');
+  const dates = ['a','b'].map(k => state.channels[k]?.fetchedAt).filter(Boolean);
+  if (dates.length && !state.sample) parts.push('Last import ' + fmtDateY(dates.sort().pop()));
+  const st = Object.values(state.videos).filter(v=>v.studio).length; if (st && !state.sample) parts.push(`${st} videos with Studio metrics`);
+  $('#status').innerHTML = parts.map(p=>`<span>${esc(p)}</span>`).join('');
+}
+
+// ---------- drawer ----------
+function openVideo(id){
+  const v = state.videos[id]; if (!v) return; state.selected = id;
+  const b = baseline(v), vd = verdict(v), sig = signals(v), f = formatOf(v);
+  const d = (val, ref, fmt, higherGood=true) => { if (val == null || ref == null || !ref) return ''; const r = val/ref; const up = r >= 1.05, dn = r <= 0.95; return `<div class="d ${(up&&higherGood)||(dn&&!higherGood)?'up':(dn&&higherGood)||(up&&!higherGood)?'dn':''}">${r>=1?r.toFixed(1)+'×':Math.round(r*100)+'%'} of usual (${fmt(ref)})</div>`; };
+  const s = v.studio || {};
+  const hist = (v.history || []).slice().sort((x,y)=>x.d<y.d?-1:1);
+  $('#drawerBody').innerHTML = `
+    <div class="dthumb">${thumbHTML(v)}<div><div class="t">${esc(v.title)}</div><div class="m"><span class="dot" style="--cc:var(--${v.ch})"></span>${esc(cfgCh(v.ch).name)} · ${fmtDateY(v.publishedAt)} · <span class="chip ${f==='short'?'short':''}">${f==='short'?'Short':'Long-form'}</span> <span class="chip ${vd.cls}">${vd.tag}</span></div>
+      <div class="m" style="gap:8px"><a class="btn sm" href="https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}" target="_blank" rel="noopener">Open on YouTube</a><button class="btn sm" id="fmtToggle">${f==='short'?'Mark as long-form':'Mark as Short'}</button></div></div></div>
+    <div class="stats">
+      <div class="stat"><div class="l">Views</div><div class="v">${fmtFull(v.views)}</div>${d(v.views, b.medViews, fmtN)}</div>
+      <div class="stat"><div class="l">Like rate</div><div class="v">${fmtPct(likeRate(v),2)}</div>${d(likeRate(v), b.likeRate, x=>fmtPct(x,2))}</div>
+      <div class="stat"><div class="l">Comments</div><div class="v">${fmtFull(v.comments)}</div>${v.views&&b.comRate!=null?d(v.comments/v.views*1000, b.comRate, x=>x.toFixed(1)+'/1k'):''}</div>
+      <div class="stat"><div class="l">Impressions</div><div class="v">${fmtN(s.impressions)}</div></div>
+      <div class="stat"><div class="l">Click-through rate</div><div class="v">${fmtPct(s.ctr)}</div>${d(s.ctr, b.ctr, fmtPct)}</div>
+      <div class="stat"><div class="l">Average viewed</div><div class="v">${fmtPct(s.avp,0)}</div>${d(s.avp, b.avp, x=>fmtPct(x,0))}<div class="d">${s.avd!=null?fmtDur(s.avd)+' of '+fmtDur(v.durationSec):'of '+fmtDur(v.durationSec)}</div></div>
+    </div>
+    <div><h3 style="margin-bottom:8px">Why it did what it did</h3><div class="sig"><ul>${sig.map(x => `<li class="${x.tone}"><span class="ic">${x.tone==='good'?'▲':x.tone==='bad'?'▼':x.tone==='warn'?'!':'·'}</span><div><b>${esc(x.head)}</b><span>${esc(x.body)}</span></div></li>`).join('')}</ul></div></div>
+    ${hist.length > 2 ? `<div><h3 style="margin-bottom:8px">Views since import history began</h3><div class="chart" id="chHist"></div></div>` : ''}
+    <div class="ai" id="aiBox" hidden><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b>Ask Claude</b><div class="help">Sends this video's numbers and the channel baseline; nothing else.</div></div><button class="btn sm" id="aiGo">Explain this video</button></div><div class="out" id="aiOut"></div></div>`;
+  if (hist.length > 2) drawLines($('#chHist'), [{ name:'Views', color: chanColor(v.ch), points: hist.map(p=>({ x: parseDay(p.d).getTime(), y: p.views })) }], {});
+  $('#fmtToggle').addEventListener('click', async () => { v.formatOverride = f === 'short' ? 'long' : 'short'; await store.saveVideos([v]); render(); openVideo(id); toast('Format updated'); });
+  if (sampleFn) { $('#aiBox').hidden = false; $('#aiGo').addEventListener('click', () => askClaude(v, b, sig)); }
+  $('#drawer').classList.add('open'); $('#scrim').classList.add('on'); $('#drawerClose').focus();
+}
+function closeDrawer(){ $('#drawer').classList.remove('open'); $('#scrim').classList.remove('on'); state.selected = null; }
+async function askClaude(v, b, sig){
+  const out = $('#aiOut'), btn = $('#aiGo'); btn.disabled = true; out.textContent = 'Thinking…';
+  const s = v.studio || {};
+  const prompt = `You are a YouTube growth coach helping a new creator. Explain in plain language why this video performed the way it did, then give two specific, practical next steps. Be concrete and honest; do not pad. Under 170 words. Plain text, no markdown headers.
+
+Channel: ${cfgCh(v.ch).name}. Channel baseline for comparable uploads: median views ${fmtFull(b.medViews)}, like rate ${fmtPct(b.likeRate,2)}, comments per 1k views ${b.comRate!=null?b.comRate.toFixed(1):'unknown'}, CTR ${fmtPct(b.ctr)}, average % viewed ${fmtPct(b.avp,0)}, average length ${fmtDur(b.dur)}.
+Video: "${v.title}". ${formatOf(v)==='short'?'Short':'Long-form'}, ${fmtDur(v.durationSec)}, published ${new Date(v.publishedAt).toLocaleString()}. Views ${fmtFull(v.views)}, likes ${fmtFull(v.likes)}, comments ${fmtFull(v.comments)}, impressions ${fmtFull(s.impressions)}, CTR ${fmtPct(s.ctr)}, average % viewed ${fmtPct(s.avp,0)}, average view duration ${s.avd!=null?fmtDur(s.avd):'unknown'}.
+Signals already detected: ${sig.map(x=>x.head).join('; ')}.`;
+  try { const r = await sampleFn(prompt, { onText: u => { out.textContent = u.text; }, modelTier: 'default' }); out.textContent = r.text; }
+  catch (e) { out.textContent = e && e.code === 'not_granted' ? 'Claude access was not granted for this page.' : e && e.code === 'rate_limited' ? 'Too many requests right now. Try again in a minute.' : 'Could not get an answer: ' + (e && e.message || e); }
+  btn.disabled = false;
+}
+
+// ---------- import ----------
+let pendingJson = null, pendingCsv = null;
+function normHandle(h){ return String(h||'').trim().replace(/^@/, '').toLowerCase(); }
+function readFile(file){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsText(file); }); }
+function parseCSV(text){
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) { const c = text[i];
+    if (q) { if (c === '"') { if (text[i+1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true; else if (c === ',') { row.push(cell); cell = ''; } else if (c === '\n' || c === '\r') { if (c === '\r' && text[i+1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; } else cell += c; }
+  if (cell.length || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim() !== ''));
+}
+function parseDurationCell(s){ if (s == null || s === '') return null; s = String(s).trim(); if (s.includes(':')) { const p = s.split(':').map(Number); return p.reduce((a,b)=>a*60+b, 0); } const n = parseFloat(s.replace(/,/g,'')); return isNaN(n) ? null : n; }
+function num(s){ if (s == null) return null; const n = parseFloat(String(s).replace(/[,%\s]/g,'')); return isNaN(n) ? null : n; }
+function prepJson(text){
+  const box = $('#jsonMap'); box.innerHTML = ''; pendingJson = null;
+  let d; try { d = JSON.parse(text); } catch(e) { $('#importMsg').textContent = 'That is not valid JSON.'; return; }
+  if (!d || !Array.isArray(d.channels)) { $('#importMsg').textContent = 'JSON does not look like youtube-sync output (missing "channels").'; return; }
+  const used = new Set();
+  const guess = c => { for (const k of ['a','b']) { const cc = cfgCh(k); if ((cc.ytId && cc.ytId === c.id) || (cc.handle && normHandle(cc.handle) === normHandle(c.handle))) { used.add(k); return k; } } return null; };
+  const map = d.channels.map(c => ({ c, key: guess(c) }));
+  for (const m of map) if (!m.key) { for (const k of ['a','b']) if (!used.has(k) && !cfgCh(k).handle && !cfgCh(k).ytId) { m.key = k; used.add(k); break; } }
+  for (const m of map) if (!m.key) { for (const k of ['a','b']) if (!used.has(k)) { m.key = k; used.add(k); break; } }
+  box.innerHTML = map.map((m, i) => `<div class="maprow"><span><b>${esc(m.c.title || m.c.handle || m.c.id)}</b> ${m.c.handle?'@'+esc(normHandle(m.c.handle)):''} · ${(m.c.videos||[]).length} videos · ${fmtFull(m.c.subs)} subs</span><select data-i="${i}"><option value="a" ${m.key==='a'?'selected':''}>Channel A · ${esc(cfgCh('a').name)}</option><option value="b" ${m.key==='b'?'selected':''}>Channel B · ${esc(cfgCh('b').name)}</option><option value="" ${!m.key?'selected':''}>Skip</option></select></div>`).join('');
+  pendingJson = { d, map }; $('#importMsg').textContent = `Ready: ${map.length} channel${map.length===1?'':'s'} found.`;
+}
+async function importJson(){
+  const { d, map } = pendingJson; const today = isoDay(new Date()); const cfg = structuredClone(state.config); let nv = 0;
+  $$('#jsonMap select').forEach(s => map[+s.dataset.i].key = s.value || null);
+  const keys = map.filter(m=>m.key).map(m=>m.key); if (new Set(keys).size !== keys.length) { $('#importMsg').textContent = 'Two channels are mapped to the same slot.'; return; }
+  const wasSample = state.sample; if (wasSample) { state.videos = {}; state.channels = {}; state.sample = false; }
+  for (const m of map) { if (!m.key) continue; const c = m.c, k = m.key;
+    const prev = state.channels[k] || {}; const history = (prev.history || []).filter(h => h.d !== today); history.push({ d: today, subs: c.subs ?? 0, views: c.views ?? 0 }); history.sort((x,y)=>x.d<y.d?-1:1);
+    await store.saveChannel(k, { subs: c.subs ?? null, views: c.views ?? null, videoCount: c.videoCount ?? (c.videos||[]).length, thumb: c.thumb || prev.thumb || null, title: c.title || null, fetchedAt: d.fetchedAt || new Date().toISOString(), history });
+    cfg.channels[k] = Object.assign({}, cfg.channels[k], { handle: cfg.channels[k].handle || c.handle || '', ytId: c.id || cfg.channels[k].ytId || '', name: cfg.channels[k].name && cfg.channels[k].name !== DEFAULT_CONFIG.channels[k].name ? cfg.channels[k].name : (c.title || cfg.channels[k].name) });
+    const list = (c.videos || []).map(x => { const prevV = state.videos[x.id] || {}; const hist = (prevV.history || []).filter(h => h.d !== today); hist.push({ d: today, views: x.views ?? 0, likes: x.likes ?? 0, comments: x.comments ?? 0 }); if (hist.length > 400) hist.splice(0, hist.length-400);
+      return Object.assign({}, prevV, { id: x.id, ch: k, title: x.title || prevV.title || x.id, publishedAt: x.publishedAt || prevV.publishedAt, durationSec: x.durationSec ?? prevV.durationSec ?? null, views: x.views ?? 0, likes: x.likes ?? 0, comments: x.comments ?? 0, thumb: x.thumb || prevV.thumb || null, history: hist }); });
+    await store.saveVideos(list); nv += list.length; }
+  await store.saveConfig(cfg); applyConfig(); render();
+  $('#importDlg').close(); toast(`Imported ${nv} videos across ${keys.length} channel${keys.length===1?'':'s'}`);
+}
+function prepCsv(text){
+  pendingCsv = null; const rows = parseCSV(text); if (rows.length < 2) { $('#csvPreview').textContent = 'CSV has no data rows.'; return; }
+  const head = rows[0].map(h => h.trim().toLowerCase());
+  const find = re => head.findIndex(h => re.test(h));
+  const col = { id: find(/^content$|video id|^video$/), title: find(/video title|^title$/), views: find(/^views$/), impressions: find(/^impressions$/), ctr: find(/click-?through/), avd: find(/average view duration/), avp: find(/average percentage viewed|average % viewed/), watch: find(/watch time/), subs: find(/^subscribers$/), pub: find(/publish/) };
+  if (col.id < 0) { $('#csvPreview').textContent = 'No "Content" or video ID column found. Export from the Content tab in Advanced mode.'; return; }
+  const recs = rows.slice(1).map(r => ({ id: (r[col.id]||'').trim(), title: col.title>=0 ? r[col.title] : '', views: col.views>=0 ? num(r[col.views]) : null, impressions: col.impressions>=0 ? num(r[col.impressions]) : null, ctr: col.ctr>=0 ? num(r[col.ctr]) : null, avd: col.avd>=0 ? parseDurationCell(r[col.avd]) : null, avp: col.avp>=0 ? num(r[col.avp]) : null, watchHours: col.watch>=0 ? num(r[col.watch]) : null, subsGained: col.subs>=0 ? num(r[col.subs]) : null, pub: col.pub>=0 ? r[col.pub] : null }))
+    .filter(r => r.id && !/^total$/i.test(r.id) && /^[\w-]{6,}$/.test(r.id));
+  const matched = recs.filter(r => state.videos[r.id] && !state.sample);
+  const chans = new Set(matched.map(r => state.videos[r.id].ch));
+  const found = ['impressions','ctr','avd','avp','watchHours','subsGained'].filter(k => recs.some(r => r[k] != null));
+  pendingCsv = { recs, autoCh: chans.size === 1 ? [...chans][0] : null };
+  $('#csvPreview').innerHTML = `${recs.length} video rows. ${matched.length} match videos already imported${chans.size===1?` (all on ${esc(cfgCh([...chans][0]).name)})`:''}. Metrics found: ${found.length ? found.map(k=>({impressions:'impressions',ctr:'CTR',avd:'avg view duration',avp:'avg % viewed',watchHours:'watch time',subsGained:'subscribers'})[k]).join(', ') : 'none of the expected columns'}.`;
+  $('#importMsg').textContent = recs.length ? 'Ready.' : '';
+}
+async function importCsv(){
+  const sel = $('#csvChan').value; const ch = sel === 'auto' ? pendingCsv.autoCh : sel;
+  if (!ch) { $('#importMsg').textContent = 'Pick which channel this CSV belongs to.'; return; }
+  const wasSample = state.sample; if (wasSample) { state.videos = {}; state.channels = {}; state.sample = false; }
+  const now = new Date().toISOString(); const list = []; let created = 0;
+  for (const r of pendingCsv.recs) { let v = state.videos[r.id];
+    if (!v) { if (!r.title) continue; v = { id: r.id, ch, title: r.title, publishedAt: r.pub ? new Date(r.pub).toISOString() : now, durationSec: null, views: r.views ?? 0, likes: 0, comments: 0, thumb: null, history: [] }; created++; }
+    else if (v.ch !== ch && sel !== 'auto') continue;
+    v = Object.assign({}, v, { studio: Object.assign({}, v.studio || {}, { impressions: r.impressions, ctr: r.ctr, avd: r.avd, avp: r.avp, watchHours: r.watchHours, subsGained: r.subsGained, updatedAt: now }) });
+    if (v.durationSec == null && r.avd != null && r.avp) v.durationSec = Math.round(r.avd / (r.avp/100));
+    if (v.studio.avp == null && r.avd != null && v.durationSec) v.studio.avp = +(r.avd / v.durationSec * 100).toFixed(1);
+    list.push(v); }
+  await store.saveVideos(list); render(); $('#importDlg').close();
+  toast(`Studio metrics added to ${list.length} videos${created ? ` (${created} new)` : ''}`);
+}
+
+// ---------- wiring ----------
+$('#period').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; state.period = +b.dataset.p; $$('#period button').forEach(x => x.setAttribute('aria-pressed', x === b)); render(); });
+$('#fChan').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; state.filt.chan = b.dataset.v; $$('#fChan button').forEach(x => x.setAttribute('aria-pressed', x === b)); renderExplorer(); });
+$('#fFmt').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; state.filt.fmt = b.dataset.v; $$('#fFmt button').forEach(x => x.setAttribute('aria-pressed', x === b)); renderExplorer(); });
+$('#fSearch').addEventListener('input', debounce(e => { state.filt.q = e.target.value; renderExplorer(); }, 120));
+$('#fLog').addEventListener('change', e => { state.filt.log = e.target.checked; renderExplorer(); });
+$('#vtable thead').addEventListener('click', e => { const th = e.target.closest('th'); if (!th) return; const k = th.dataset.k; if (state.sort.k === k) state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc'; else { state.sort.k = k; state.sort.dir = k === 'title' || k === 'format' ? 'asc' : 'desc'; } renderExplorer(); });
+$('#vtable tbody').addEventListener('click', e => { const tr = e.target.closest('tr[data-id]'); if (tr) openVideo(tr.dataset.id); });
+$('#leader').addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (b) openVideo(b.dataset.id); });
+$('#drawerClose').addEventListener('click', closeDrawer); $('#scrim').addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.selected) closeDrawer(); });
+$$('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+const openImport = () => { $('#importMsg').textContent = ''; $('#importDlg').showModal(); };
+$('#btnImport').addEventListener('click', openImport); $('#bannerImport').addEventListener('click', openImport);
+$$('#importDlg .tabs button').forEach(b => b.addEventListener('click', () => { $$('#importDlg .tabs button').forEach(x => x.setAttribute('aria-selected', x === b)); $('#tab-json').hidden = b.dataset.tab !== 'json'; $('#tab-csv').hidden = b.dataset.tab !== 'csv'; $('#importMsg').textContent = ''; }));
+$('#jsonFile').addEventListener('change', async e => { const f = e.target.files[0]; if (f) prepJson(await readFile(f)); });
+$('#jsonText').addEventListener('input', debounce(e => { if (e.target.value.trim()) prepJson(e.target.value); }, 300));
+$('#csvFile').addEventListener('change', async e => { const f = e.target.files[0]; if (f) prepCsv(await readFile(f)); });
+$('#importGo').addEventListener('click', async () => {
+  const isJson = !$('#tab-json').hidden; const btn = $('#importGo'); btn.disabled = true;
+  try { if (isJson) { if (!pendingJson) { $('#importMsg').textContent = 'Choose a file or paste JSON first.'; } else await importJson(); } else { if (!pendingCsv) { $('#importMsg').textContent = 'Choose a CSV file first.'; } else await importCsv(); } }
+  catch (e) { console.error(e); $('#importMsg').textContent = 'Import failed: ' + (e && e.message || e); }
+  btn.disabled = false;
+});
+function swatches(el, cur){ el.innerHTML = Object.keys(COLORS).map(k => `<button type="button" data-c="${k}" aria-label="${k}" aria-pressed="${k===cur}" style="--sc:${COLORS[k]}"></button>`).join(''); el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; el.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); }); }
+$('#btnSettings').addEventListener('click', () => { const c = state.config; $('#sNameA').value = cfgCh('a').name; $('#sHandleA').value = cfgCh('a').handle || ''; $('#sNameB').value = cfgCh('b').name; $('#sHandleB').value = cfgCh('b').handle || ''; $('#sShort').value = c.shortMax || 180; swatches($('#swA'), cfgCh('a').color); swatches($('#swB'), cfgCh('b').color); $('#settingsDlg').showModal(); });
+$('#settingsSave').addEventListener('click', async () => {
+  const cfg = structuredClone(state.config);
+  cfg.channels.a = Object.assign({}, cfg.channels.a, { name: $('#sNameA').value.trim() || 'Channel A', handle: $('#sHandleA').value.trim(), color: $('#swA button[aria-pressed="true"]')?.dataset.c || 'blue' });
+  cfg.channels.b = Object.assign({}, cfg.channels.b, { name: $('#sNameB').value.trim() || 'Channel B', handle: $('#sHandleB').value.trim(), color: $('#swB button[aria-pressed="true"]')?.dataset.c || 'orange' });
+  if (cfg.channels.a.color === cfg.channels.b.color) { toast('Pick two different colors so the channels stay distinguishable'); return; }
+  cfg.shortMax = clamp(+$('#sShort').value || 180, 15, 300);
+  await store.saveConfig(cfg); applyConfig(); render(); $('#settingsDlg').close(); toast('Settings saved');
+});
+$('#clearAll').addEventListener('click', async () => { if (state.sample) { toast('Nothing imported yet'); return; } if (!confirm('Delete every imported video and channel snapshot for both channels? This cannot be undone.')) return; await store.clearAll(); $('#settingsDlg').close(); toast('All imported data deleted'); });
+new ResizeObserver(debounce(() => { renderGrowth(); renderExplorer(); renderQuad(); if (state.selected) { const el = $('#chHist'); if (el) openVideo(state.selected); } }, 150)).observe(document.querySelector('main'));
+
+// ---------- boot ----------
+store.applySample(); applyConfig(); render();
+if (window.claude && typeof claude.use === 'function') {
+  store.connect();
+  claude.use('sample').then(s => { sampleFn = s; if (state.selected) openVideo(state.selected); }).catch(() => {});
+} else { state.mode = 'local'; if (store.loadLocal()) { applyConfig(); } render(); }
+})();
+</script>

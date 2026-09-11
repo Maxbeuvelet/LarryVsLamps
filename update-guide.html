@@ -1,0 +1,75 @@
+<title>Dashboard Update Guide</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{color-scheme:light;--bg:#f4f5f7;--surface:#fff;--ink:#131518;--ink-2:#4d5461;--muted:#828a97;--line:#e4e7ec;--a:#2a78d6;--b:#eb6834;--note:#fff6dd;--note-line:#e8c96a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f1114;--surface:#181b20;--ink:#f1f3f6;--ink-2:#aeb5c0;--muted:#7c8491;--line:#282d35;--a:#3987e5;--b:#d95926;--note:#2a2410;--note-line:#7a6220}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1114;--surface:#181b20;--ink:#f1f3f6;--ink-2:#aeb5c0;--muted:#7c8491;--line:#282d35;--a:#3987e5;--b:#d95926;--note:#2a2410;--note-line:#7a6220}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;padding-inline:clamp(16px,4vw,40px);padding-block:32px 64px}
+main{max-width:680px;margin:0 auto;display:grid;gap:28px}
+h1,h2{font-family:"Bricolage Grotesque","IBM Plex Sans",sans-serif;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:30px;font-weight:800}
+h2{font-size:19px;font-weight:700;display:flex;align-items:center;gap:10px}
+h2 .tag{font:600 11px/1 "IBM Plex Sans",sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:999px;background:var(--line);color:var(--ink-2)}
+p{margin:0;color:var(--ink-2)}
+.lede{font-size:16px}
+section{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;display:grid;gap:14px}
+section.a{border-top:4px solid var(--a)}
+section.b{border-top:4px solid var(--b)}
+ol{margin:0;padding-left:0;list-style:none;counter-reset:s;display:grid;gap:10px}
+ol li{counter-increment:s;display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start}
+ol li::before{content:counter(s);width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--bg);font-weight:700;font-size:13px;display:grid;place-items:center;font-family:"Bricolage Grotesque",sans-serif}
+li b{font-weight:600}
+li span{display:block;color:var(--ink-2);font-size:14px}
+kbd{font:500 13px "IBM Plex Sans",sans-serif;background:var(--line);padding:1px 7px;border-radius:5px;color:var(--ink)}
+.note{background:var(--note);border:1px solid var(--note-line);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--ink)}
+.meta{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+a{color:var(--a)}
+.when{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:14px}
+.when b{font-weight:600}
+</style>
+
+<main>
+  <div>
+    <h1>Keeping the dashboard up to date</h1>
+    <p class="lede" style="margin-top:8px">Two routines. The quick one refreshes views, subs, likes and comments for both channels. The Studio one adds the private numbers that explain why a video worked.</p>
+    <p style="margin-top:10px">Dashboard: <a href="https://claude.ai/code/artifact/87305d9a-7741-40d4-a090-38a789292d69">claude.ai/code/artifact/87305d9a…</a></p>
+  </div>
+
+  <section class="a">
+    <h2>Quick refresh <span class="tag">Every day or two · 2 minutes</span></h2>
+    <p>Updates both channels at once. Anyone with the sync page and an API key can do it.</p>
+    <ol>
+      <li><div><b>Open <kbd>youtube-sync.html</kbd></b><span>Double-click it in the LarryVsLamps folder. The API key and both handles are already filled in from last time.</span></div></li>
+      <li><div><b>Click <kbd>Fetch both channels</kbd></b><span>Wait for the log to say "Done".</span></div></li>
+      <li><div><b>Click <kbd>Copy to clipboard</kbd></b></div></li>
+      <li><div><b>Open the dashboard and click <kbd>Import data</kbd></b><span>Top right of the page.</span></div></li>
+      <li><div><b>Paste into the "Or paste JSON" box, check both rows say the right channel, click <kbd>Import</kbd></b><span>Larry should map to Channel A and Lamps to Channel B.</span></div></li>
+    </ol>
+    <div class="note">Each import adds one dot to the growth lines. Skip a week and the line just has a gap, nothing breaks.</div>
+  </section>
+
+  <section class="b">
+    <h2>Studio metrics <span class="tag">Weekly · 5 minutes · each channel owner</span></h2>
+    <p>Click-through rate and retention are private, so each of you exports your own channel from YouTube Studio on a computer.</p>
+    <ol>
+      <li><div><b>Go to studio.youtube.com and click <kbd>Analytics</kbd></b></div></li>
+      <li><div><b>Click <kbd>Advanced mode</kbd></b><span>Top right of the analytics page.</span></div></li>
+      <li><div><b>Open the <kbd>Content</kbd> tab</b><span>The table should list your videos.</span></div></li>
+      <li><div><b>Add these columns with <kbd>+ metric</kbd></b><span>Impressions · Impressions click-through rate · Average view duration · Average percentage viewed. Only needed the first time; Studio remembers them.</span></div></li>
+      <li><div><b>Set the date range to <kbd>Lifetime</kbd></b><span>Top right. This makes sure every video is included.</span></div></li>
+      <li><div><b>Click the <kbd>Export</kbd> arrow and choose <kbd>.csv</kbd></b><span>A zip downloads. Unzip it to find <kbd>Table data.csv</kbd>.</span></div></li>
+      <li><div><b>In the dashboard: <kbd>Import data</kbd> → <kbd>YouTube Studio CSV</kbd> tab → choose Table data.csv → <kbd>Import</kbd></b><span>Leave the channel on "Detect from video IDs". Do the quick refresh first if the videos are not in the dashboard yet.</span></div></li>
+    </ol>
+    <div class="note">If you would rather not import it yourself, send the CSV to whoever runs the dashboard and they can import it for you.</div>
+  </section>
+
+  <section>
+    <h2>What updates when</h2>
+    <div class="when">
+      <b>Quick refresh</b><span>Subscribers, total views, every video's views, likes and comments, new uploads, growth lines, top videos, verdicts, Shorts vs long-form.</span>
+      <b>Studio CSV</b><span>Impressions, click-through rate, average view duration and percentage viewed. Fills in the "Packaging vs content" chart and the CTR and retention lines in each video's "why" panel.</span>
+    </div>
+    <p class="meta"><span>The Studio import never overwrites view counts; the quick refresh never touches Studio numbers.</span></p>
+  </section>
+</main>

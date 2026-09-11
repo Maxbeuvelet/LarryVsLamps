@@ -1,0 +1,6 @@
+# Data exports and secrets never belong in the repo
+*.json
+*.csv
+*.zip
+Thumbs.db
+.DS_Store
