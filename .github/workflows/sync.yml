@@ -10,6 +10,7 @@ on:
     paths:
       - "data/studio/**"
       - "data/config.json"
+      - "data/benchmarks.json"
       - "scripts/**"
 
 permissions:
@@ -33,7 +34,7 @@ jobs:
 
       - name: Fetch public stats from YouTube
         if: ${{ env.YOUTUBE_API_KEY != '' }}
-        run: node scripts/fetch.js --out out/youtube.json --no-thumbs
+        run: node scripts/fetch.js --out out/youtube.json --no-thumbs --benchmarks data/benchmarks.json --max-videos 200
 
       - name: Warn when the API key secret is missing
         if: ${{ env.YOUTUBE_API_KEY == '' }}

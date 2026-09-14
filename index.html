@@ -190,6 +190,25 @@ td .title span{line-height:1.3}
 .hb .bar{height:12px;border-radius:0 4px 4px 0;background:var(--cc);min-width:2px;transition:width .35s}
 .hb .val{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
 
+/* benchmarks */
+.bench-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.bench-h p{margin:2px 0 0;color:var(--muted);font-size:13px}
+#btable tr.sel td{background:var(--raised)}
+#btable td .who{display:flex;align-items:center;gap:8px;white-space:nowrap}
+#btable td .who .av{width:24px;height:24px;border-radius:50%;background:var(--cc);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700;overflow:hidden;flex:none}
+#btable td .who .av img{width:100%;height:100%;object-fit:cover;display:block}
+#btable td .who small{color:var(--muted)}
+.rm{border:0;background:transparent;color:var(--muted);font-size:16px;line-height:1;padding:2px 6px;border-radius:6px}
+.rm:hover{color:var(--bad);background:var(--bad-bg)}
+.bdetail{display:grid;gap:16px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.bdetail .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.bdetail h3{margin-bottom:6px;color:var(--ink-2);font-weight:600;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase}
+.bdetail .chart{--cc:var(--muted)}
+.recent{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:10px}
+.recent .lbi{cursor:default}
+.recent .lbi:hover{border-color:var(--line)}
+.pend td{color:var(--muted)}
+
 /* drawer */
 .drawer{position:fixed;inset:0 0 0 auto;width:min(520px,100%);background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow);z-index:40;transform:translateX(102%);transition:transform .25s ease;display:flex;flex-direction:column}
 .drawer.open{transform:none}
@@ -324,6 +343,14 @@ dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;justi
     </div>
   </section>
 
+  <section class="card" id="benchCard">
+    <div class="bench-h"><div><h2>How the big channels upload</h2><p>Add any YouTube channel to see its upload habits next to yours. Times are in your time zone; benchmark channels show their newest 200 uploads.</p></div><button class="btn" id="btnBench">Add a channel</button></div>
+    <div class="tablewrap" style="border-top:0;margin-top:0"><table id="btable"><thead><tr>
+      <th>Channel</th><th class="num">Subscribers</th><th class="num">Uploads / week</th><th class="num">Shorts share</th><th class="num">Typical length</th><th class="num">Median views</th><th class="num">Views per sub</th><th class="num">Like rate</th><th>Favourite day</th><th>Favourite time</th><th class="num">Title length</th><th></th>
+    </tr></thead><tbody></tbody></table></div>
+    <div id="benchDetail"></div>
+  </section>
+
   <section class="grid-2">
     <div class="card">
       <div class="card-h"><h2>Shorts vs long-form</h2><p>Per channel, videos published in the period.</p></div>
@@ -395,6 +422,27 @@ dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;justi
   <div class="df"><button class="btn primary" id="csvGo">Upload</button></div>
 </dialog>
 
+<dialog id="benchDlg">
+  <div class="dh"><h2>Add a channel to compare</h2><button class="btn sm" data-close>Close</button></div>
+  <div class="db">
+    <p class="help">Paste a channel handle or URL, for example <code>@MrBeast</code> or <code>youtube.com/@MrBeast</code>. It is saved to the shared list, and its uploads appear after the next data update (usually within a few minutes).</p>
+    <div class="field"><label for="benchHandle">Channel handle or URL</label><input id="benchHandle" placeholder="@handle"></div>
+    <div class="field" id="benchTokenField">
+      <label for="benchToken">GitHub token (asked once, kept in this browser only)</label>
+      <input id="benchToken" type="password" autocomplete="off" placeholder="github_pat_…">
+      <details class="help"><summary>How to get a token (about 2 minutes)</summary><ol>
+        <li>On github.com, click your profile picture → <b>Settings</b> → <b>Developer settings</b> (bottom of the left menu) → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</li>
+        <li>Name: anything. Expiration: pick the longest offered.</li>
+        <li>Repository access: <b>Only select repositories</b> → choose <b>LarryVsLamps</b>.</li>
+        <li>Permissions → Repository permissions → <b>Contents</b> → <b>Read and write</b>.</li>
+        <li>Generate, copy the token, paste it above. Same token as the Studio CSV upload.</li>
+      </ol></details>
+    </div>
+    <p class="help" id="benchMsg"></p>
+  </div>
+  <div class="df"><button class="btn primary" id="benchGo">Add channel</button></div>
+</dialog>
+
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -437,6 +485,9 @@ const state = {
   mode: 'loading',       // loading | live | nodata
   updatedAt: null,
   selected: null,
+  benchmarks: {},        // ytId -> {handle,title,thumb,subs,videos:[...]}
+  benchmarkHandles: [],  // the shared list, including ones not fetched yet
+  benchSel: null,        // 'a' | 'b' | ytId
 };
 
 // ---------- sample data ----------
@@ -506,6 +557,7 @@ const store = {
       if (d.config) state.config = Object.assign(structuredClone(DEFAULT_CONFIG), d.config);
       if (d.channels && Object.keys(d.channels).length) { state.channels = d.channels; state.videos = d.videos || {}; state.sample = false; state.updatedAt = d.updatedAt || null; state.mode = 'live'; }
       else state.mode = 'nodata';
+      state.benchmarks = d.benchmarks || {}; state.benchmarkHandles = d.benchmarkHandles || [];
     } catch (e) { console.warn('No data file yet', e); state.mode = 'nodata'; }
     for (const [id, f] of Object.entries(overrides)) if (state.videos[id]) state.videos[id].formatOverride = f;
     applyConfig(); render();
@@ -709,12 +761,12 @@ function applyConfig(){
   $$('#fChan button[data-v="a"]').forEach(b => b.textContent = cfgCh('a').name); $$('#fChan button[data-v="b"]').forEach(b => b.textContent = cfgCh('b').name);
 }
 function legendHTML(extra){ return `<span><i class="sw" style="--cc:var(--a)"></i>${esc(cfgCh('a').name)}</span><span><i class="sw" style="--cc:var(--b)"></i>${esc(cfgCh('b').name)}</span>${extra||''}`; }
-function thumbHTML(v, cls){ const short = formatOf(v)==='short'; const src = v.thumb || (v.id && !String(v.id).startsWith('smp_') ? 'https://i.ytimg.com/vi/' + encodeURIComponent(v.id) + '/mqdefault.jpg' : null); return `<div class="thumb ${short?'s':''} ${cls||''}" style="--cc:var(--${v.ch})">${src ? `<img src="${esc(src)}" alt="" loading="lazy">` : `<span>${esc(cfgCh(v.ch).name.slice(0,1))}</span>`}<span class="dur">${fmtDur(v.durationSec)}</span></div>`; }
+function thumbHTML(v, cls){ const short = formatOf(v)==='short'; const src = v.thumb || (v.id && !String(v.id).startsWith('smp_') ? 'https://i.ytimg.com/vi/' + encodeURIComponent(v.id) + '/mqdefault.jpg' : null); return `<div class="thumb ${short?'s':''} ${cls||''}" style="--cc:var(--${v.ch === 'bench' ? 'c-aqua' : v.ch})">${src ? `<img src="${esc(src)}" alt="" loading="lazy">` : `<span>${esc(cfgCh(v.ch).name.slice(0,1))}</span>`}<span class="dur">${fmtDur(v.durationSec)}</span></div>`; }
 function periodLabel(){ return state.period ? `last ${state.period} days` : 'all time'; }
 
 function render(){
   $('#banner').hidden = !state.sample;
-  renderScore(); renderKpis(); renderGrowth(); renderLeader(); renderExplorer(); renderFormat(); renderQuad(); renderStatus();
+  renderScore(); renderKpis(); renderGrowth(); renderLeader(); renderExplorer(); renderFormat(); renderQuad(); renderBench(); renderStatus();
 }
 function renderScore(){
   const A = chanSummary('a'), B = chanSummary('b');
@@ -848,6 +900,110 @@ $$('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.close
 const openImport = () => $('#importDlg').showModal();
 $('#btnImport').addEventListener('click', openImport); $('#bannerImport').addEventListener('click', openImport);
 
+// ---------- benchmark channels ----------
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const hourLabel = h => { const x = h % 12 || 12; return x + (h < 12 ? ' am' : ' pm'); };
+const argmax = a => a.reduce((m, v, i) => v > a[m] ? i : m, 0);
+function uploadProfile(vids, subs){
+  const since = periodSince(); vids = vids.filter(v => v.publishedAt && (!since || new Date(v.publishedAt) >= since));
+  const n = vids.length; if (!n) return null;
+  const sorted = [...vids].sort((a,b) => new Date(a.publishedAt) - new Date(b.publishedAt));
+  const spanDays = Math.max(7, (Date.now() - new Date(sorted[0].publishedAt)) / DAY);
+  const shorts = vids.filter(v => formatOf(v) === 'short'), longs = vids.filter(v => formatOf(v) !== 'short');
+  const wd = Array(7).fill(0), hr = Array(24).fill(0);
+  vids.forEach(v => { const d = new Date(v.publishedAt); wd[d.getDay()]++; hr[d.getHours()]++; });
+  const views = sum(vids.map(v=>v.views)), likes = sum(vids.map(v=>v.likes));
+  const medViews = median(vids.map(v=>v.views));
+  return { n, perWeek: n / (spanDays/7), shortShare: shorts.length/n, medLong: median(longs.map(v=>v.durationSec).filter(Boolean)), medShort: median(shorts.map(v=>v.durationSec).filter(Boolean)),
+    medViews, viewsPerSub: subs ? medViews/subs : null, likeRate: views ? likes/views*100 : null, wd, hr, topDay: argmax(wd), topHour: argmax(hr), titleLen: median(vids.map(v=>(v.title||'').length)), recent: sorted.slice(-8).reverse() };
+}
+function benchRows(){
+  const rows = ['a','b'].map(k => ({ key: k, name: cfgCh(k).name, handle: cfgCh(k).handle, thumb: state.channels[k]?.thumb || null, subs: state.channels[k]?.subs ?? null, color: 'var(--' + k + ')', own: true, videos: Object.values(state.videos).filter(v => v.ch === k) }));
+  for (const b of Object.values(state.benchmarks)) rows.push({ key: b.id, name: b.title || b.handle, handle: b.handle, thumb: b.thumb || null, subs: b.subs ?? null, color: 'var(--c-aqua)', own: false, videos: b.videos || [] });
+  return rows;
+}
+function renderBench(){
+  const rows = benchRows(); const have = new Set(rows.map(r => normHandleB(r.handle)));
+  const pending = (state.benchmarkHandles || []).filter(h => !have.has(normHandleB(h)) && !Object.values(state.benchmarks).some(b => normHandleB(b.requestedHandle) === normHandleB(h)));
+  if (!state.benchSel || !rows.some(r => r.key === state.benchSel)) state.benchSel = rows.find(r => !r.own)?.key || 'a';
+  const tb = $('#btable tbody');
+  tb.innerHTML = rows.map(r => { const p = uploadProfile(r.videos, r.subs); const tl = p ? (p.medLong != null ? fmtDur(p.medLong) + (p.medShort != null ? ' / ' + fmtDur(p.medShort) : '') : (p.medShort != null ? fmtDur(p.medShort) + ' (Shorts)' : '—')) : '—';
+    return `<tr class="vrowt ${r.key === state.benchSel ? 'sel' : ''}" data-key="${esc(r.key)}">
+      <td><div class="who"><span class="av" style="--cc:${r.color}">${r.thumb ? `<img src="${esc(r.thumb)}" alt="">` : esc((r.name||'?').slice(0,1))}</span><span>${esc(r.name)}${r.own ? '' : ' <small>' + esc(r.handle||'') + '</small>'}</span></div></td>
+      <td class="num">${fmtN(r.subs)}</td><td class="num">${p ? p.perWeek.toFixed(1) : '—'}</td><td class="num">${p ? Math.round(p.shortShare*100) + '%' : '—'}</td><td class="num">${tl}</td>
+      <td class="num">${p ? fmtN(p.medViews) : '—'}</td><td class="num">${p && p.viewsPerSub != null ? p.viewsPerSub.toFixed(2) : '—'}</td><td class="num">${p ? fmtPct(p.likeRate,2) : '—'}</td>
+      <td>${p ? DAYS[p.topDay] : '—'}</td><td>${p ? hourLabel(p.topHour) : '—'}</td><td class="num">${p ? Math.round(p.titleLen) + ' chars' : '—'}</td>
+      <td>${r.own ? '' : `<button class="rm" data-rm="${esc(r.handle || '')}" title="Remove from the list" aria-label="Remove">×</button>`}</td></tr>`; }).join('')
+    + pending.map(h => `<tr class="pend"><td><div class="who"><span class="av" style="--cc:var(--line-2)">…</span><span>${esc(h)}</span></div></td><td colspan="10">Added to the list. Appears after the next data update, usually within a few minutes.</td><td><button class="rm" data-rm="${esc(h)}" title="Remove from the list" aria-label="Remove">×</button></td></tr>`).join('');
+  if (!rows.some(r => !r.own) && !pending.length) tb.innerHTML += `<tr class="pend"><td colspan="12">No other channels yet. Click "Add a channel" and paste a handle like @MrBeast to compare upload habits.</td></tr>`;
+  renderBenchDetail();
+}
+function normHandleB(h){ return String(h||'').trim().replace(/^.*youtube\.com\//i,'').replace(/^@/,'').replace(/[\/?#].*$/,'').toLowerCase(); }
+function drawColumns(host, labels, values, opts){
+  host.innerHTML = '';
+  const W = Math.max(240, host.clientWidth || 400), H = 150, padL = 6, padR = 6, padT = 18, padB = 22;
+  const max = Math.max(...values, 1), n = values.length, slot = (W - padL - padR) / n, bw = Math.min(24, slot - 2), top = argmax(values);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"><g class="axis"><line x1="${padL}" x2="${W-padR}" y1="${H-padB}" y2="${H-padB}"/></g>`;
+  values.forEach((v, i) => { const h = v/max * (H-padT-padB), x = padL + i*slot + (slot-bw)/2, y = H-padB-h;
+    svg += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${opts.color}" opacity="${i === top ? 1 : .55}"><title>${esc(labels[i])}: ${v} upload${v===1?'':'s'}</title></rect>`;
+    if (i === top && v) svg += `<text class="ptlbl" x="${(x+bw/2).toFixed(1)}" y="${(y-5).toFixed(1)}" text-anchor="middle">${v}</text>`;
+    if (opts.every === 1 || i % opts.every === 0) svg += `<text x="${(x+bw/2).toFixed(1)}" y="${H-6}" text-anchor="middle">${esc(opts.short ? labels[i].slice(0,3) : labels[i])}</text>`; });
+  host.innerHTML = svg + '</svg>';
+}
+function renderBenchDetail(){
+  const host = $('#benchDetail'); if (!host) return;
+  const r = benchRows().find(x => x.key === state.benchSel); if (!r) { host.innerHTML = ''; return; }
+  const p = uploadProfile(r.videos, r.subs);
+  if (!p) { host.innerHTML = `<div class="bdetail"><div class="empty">No uploads from ${esc(r.name)} in this period. Try "All time".</div></div>`; return; }
+  const since = periodSince();
+  host.innerHTML = `<div class="bdetail">
+    <div class="bench-h" style="margin:0"><div><h3 style="text-transform:none;font-size:15px;letter-spacing:0;color:var(--ink)">${esc(r.name)}: ${p.n} uploads ${since ? 'in the ' + periodLabel() : 'in the newest ' + p.n}, about ${p.perWeek.toFixed(1)} a week</h3><p>${Math.round(p.shortShare*100)}% Shorts. Most often posts on ${DAYS[p.topDay]} around ${hourLabel(p.topHour)} (your time). Median title ${Math.round(p.titleLen)} characters.</p></div>${r.own ? '' : `<a class="btn sm" href="https://www.youtube.com/${esc(r.handle||'')}" target="_blank" rel="noopener">Open channel</a>`}</div>
+    <div class="cols"><div><h3>Uploads by weekday</h3><div class="chart" id="bWd"></div></div><div><h3>Uploads by hour of day</h3><div class="chart" id="bHr"></div></div></div>
+    <div><h3>Latest uploads</h3><div class="recent">${p.recent.map(v => `<div class="lbi">${thumbHTML(Object.assign({ ch: r.own ? r.key : 'bench' }, v))}<div><div class="ti">${esc(v.title)}</div><div class="meta"><b>${fmtN(v.views)}</b> views · ${formatOf(v)==='short'?'Short':'Long'} · ${new Date(v.publishedAt).toLocaleString(undefined,{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div></div></div>`).join('')}</div></div>
+  </div>`;
+  drawColumns($('#bWd'), DAYS, p.wd, { color: r.color, every: 1, short: true });
+  drawColumns($('#bHr'), Array.from({length:24}, (_,h) => hourLabel(h)), p.hr, { color: r.color, every: 3 });
+}
+async function ghJson(path, token){
+  const r = await fetch('https://api.github.com/repos/' + REPO + '/contents/' + path + '?ref=main', { headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' }, cache: 'no-store' });
+  if (r.status === 404) return { sha: null, json: null };
+  ghCheck(r); const d = await r.json();
+  return { sha: d.sha, json: JSON.parse(decodeURIComponent(escape(atob(String(d.content||'').replace(/\n/g,''))))) };
+}
+function ghCheck(r){
+  if (r.status === 401) throw new Error('GitHub rejected the token. Check it is a fine-grained token with Contents: Read and write on LarryVsLamps, and that it has not expired.');
+  if (r.status === 403 || r.status === 404) throw new Error('No permission to write to the repository. The token must belong to a collaborator with write access and be scoped to LarryVsLamps.');
+  if (!r.ok) throw new Error('GitHub error ' + r.status);
+}
+async function saveBenchList(list, token, message){
+  const { sha } = await ghJson('data/benchmarks.json', token);
+  const body = { message, content: btoa(unescape(encodeURIComponent(JSON.stringify({ channels: list }, null, 2) + '\n'))), branch: 'main' }; if (sha) body.sha = sha;
+  const r = await fetch('https://api.github.com/repos/' + REPO + '/contents/data/benchmarks.json', { method: 'PUT', headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  ghCheck(r); setToken(token); state.benchmarkHandles = list; renderBench();
+}
+$('#btnBench').addEventListener('click', () => { $('#benchTokenField').hidden = !!getToken(); $('#benchMsg').textContent = ''; $('#benchHandle').value = ''; $('#benchDlg').showModal(); $('#benchHandle').focus(); });
+$('#benchGo').addEventListener('click', async () => {
+  const msg = $('#benchMsg'), btn = $('#benchGo'); const raw = $('#benchHandle').value.trim(); const token = getToken() || $('#benchToken').value.trim();
+  const h = normHandleB(raw); if (!h) { msg.textContent = 'Enter a handle or channel URL.'; return; }
+  if (!token) { msg.textContent = 'Paste a GitHub token so the list can be saved.'; return; }
+  btn.disabled = true; msg.textContent = 'Saving…';
+  try {
+    const { json } = await ghJson('data/benchmarks.json', token); const list = (json && json.channels) || [];
+    if (list.some(x => normHandleB(x) === h) || ['a','b'].some(k => normHandleB(cfgCh(k).handle) === h)) throw new Error('@' + h + ' is already on the list.');
+    list.push('@' + h);
+    await saveBenchList(list, token, 'Add benchmark channel @' + h);
+    $('#benchDlg').close(); toast('@' + h + ' added. Its uploads appear after the next data update, usually within a few minutes.', 6000);
+  } catch (e) { msg.textContent = e.message || String(e); }
+  btn.disabled = false;
+});
+$('#btable').addEventListener('click', async e => {
+  const rm = e.target.closest('[data-rm]');
+  if (rm) { const h = rm.dataset.rm; if (!confirm('Remove ' + h + ' from the comparison list?')) return; let token = getToken(); if (!token) { token = prompt('Paste your GitHub token to change the shared list:'); if (!token) return; }
+    try { const { json } = await ghJson('data/benchmarks.json', token); const list = ((json && json.channels) || []).filter(x => normHandleB(x) !== normHandleB(h)); await saveBenchList(list, token.trim(), 'Remove benchmark channel ' + h); for (const [id, b] of Object.entries(state.benchmarks)) if (normHandleB(b.handle) === normHandleB(h) || normHandleB(b.requestedHandle) === normHandleB(h)) delete state.benchmarks[id]; renderBench(); toast(h + ' removed'); } catch (err) { toast(err.message || String(err), 6000); }
+    return; }
+  const tr = e.target.closest('tr[data-key]'); if (tr) { state.benchSel = tr.dataset.key; renderBench(); }
+});
+
 // ---------- Studio CSV upload ----------
 const REPO = 'Maxbeuvelet/LarryVsLamps';
 const TOKEN_KEY = 'lvl.github.token';
@@ -915,7 +1071,7 @@ $('#csvGo').addEventListener('click', async () => {
   } catch (e) { msg.textContent = e.message || String(e); }
   btn.disabled = false;
 });
-new ResizeObserver(debounce(() => { renderGrowth(); renderExplorer(); renderQuad(); if (state.selected) { const el = $('#chHist'); if (el) openVideo(state.selected); } }, 150)).observe(document.querySelector('main'));
+new ResizeObserver(debounce(() => { renderGrowth(); renderExplorer(); renderQuad(); renderBenchDetail(); if (state.selected) { const el = $('#chHist'); if (el) openVideo(state.selected); } }, 150)).observe(document.querySelector('main'));
 
 // ---------- boot ----------
 store.applySample(); applyConfig(); render();

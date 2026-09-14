@@ -61,6 +61,19 @@ if (fetched && Array.isArray(fetched.channels)) {
   }
 } else console.error('No fetch file at ' + fetchFile + '; keeping existing stats.');
 
+// ---- 1b. benchmark channels (other creators, newest uploads only; replaced wholesale each fetch) ----
+const benchList = (readJson(opt('benchmarks', 'data/benchmarks.json')) || {}).channels || [];
+db.benchmarkHandles = benchList;
+if (fetched && Array.isArray(fetched.benchmarks)) {
+  db.benchmarks = {};
+  for (const b of fetched.benchmarks) {
+    if (!b || b.error || !b.id) { if (b && b.error) console.error('Benchmark ' + b.requestedHandle + ': ' + b.error); continue; }
+    db.benchmarks[b.id] = { id: b.id, handle: b.handle ? '@' + norm(b.handle) : b.requestedHandle, requestedHandle: b.requestedHandle, title: b.title, thumb: b.thumb || null, subs: b.subs, views: b.views, videoCount: b.videoCount, fetchedAt: fetched.fetchedAt,
+      videos: (b.videos || []).map(v => ({ id: v.id, title: v.title, publishedAt: v.publishedAt, durationSec: v.durationSec, views: v.views, likes: v.likes, comments: v.comments })) };
+  }
+  console.error('Benchmarks: ' + Object.keys(db.benchmarks).length + ' channel(s)');
+} else db.benchmarks = db.benchmarks || {};
+
 // ---- 2. apply Studio CSV exports ----
 function parseCSV(text) {
   const rows = []; let row = [], cell = '', q = false;

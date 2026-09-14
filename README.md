@@ -43,3 +43,11 @@ The upload triggers the sync job, and the dashboard rebuilds within a few minute
 - The dashboard shows clearly labelled sample data until `data/db.json` exists.
 - The repository is public so GitHub Pages can serve it for free. It contains only public YouTube statistics and Studio exports; the API key lives in a repository secret and is never committed.
 - The earlier Claude artifact version of the dashboard is superseded by this one.
+
+## Comparing against other channels
+
+The "How the big channels upload" section shows the upload habits of any public channel next to yours: uploads per week, Shorts share, typical length, median views, views per subscriber, favourite day and hour, title length, plus weekday and hour charts and the latest uploads.
+
+- Add a channel from the dashboard (Add a channel → paste a handle; needs the same GitHub token as the CSV upload) or edit `data/benchmarks.json` directly.
+- The sync job fetches each listed channel's newest 200 uploads. A bad handle is skipped with a warning; it never fails the run.
+- Remove a channel with the × in its row.

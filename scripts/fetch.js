@@ -14,10 +14,14 @@ const key = process.env.YOUTUBE_API_KEY;
 if (!key) { console.error('Set YOUTUBE_API_KEY.'); process.exit(1); }
 
 const args = process.argv.slice(2);
-const outIdx = args.indexOf('--out');
-const outFile = outIdx >= 0 ? args[outIdx + 1] : 'out/youtube.json';
-const noThumbs = args.includes('--no-thumbs');
-let handles = args.filter((a, i) => !a.startsWith('--') && (outIdx < 0 || i !== outIdx + 1));
+const optIdx = name => args.indexOf('--' + name);
+const optVal = (name, def) => { const i = optIdx(name); return i >= 0 ? args[i + 1] : def; };
+const outFile = optVal('out', 'out/youtube.json');
+const benchFile = optVal('benchmarks', null);          // JSON file: {"channels": ["@handle", ...]}
+const maxBench = parseInt(optVal('max-videos', '200'), 10); // newest uploads kept per benchmark channel
+const noThumbs = args.includes('--no-thumbs');          // skip per-video thumbnails (channel avatar is always kept)
+const valueIdx = new Set(['out', 'benchmarks', 'max-videos'].map(n => optIdx(n) + 1).filter(i => i > 0));
+let handles = args.filter((a, i) => !a.startsWith('--') && !valueIdx.has(i));
 if (!handles.length) {
   const cfgPath = path.join(__dirname, 'channels.json');
   if (fs.existsSync(cfgPath)) { const c = JSON.parse(fs.readFileSync(cfgPath, 'utf8')); handles = ['a', 'b'].map(k => c[k]).filter(Boolean); }
@@ -39,15 +43,16 @@ function parseHandle(s) {
 }
 const isoDur = d => { const m = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(d || ''); return m ? (+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0) : null; };
 async function toDataUrl(url) {
-  if (!url || noThumbs) return null;
+  if (!url) return null;
   try { const r = await fetch(url); if (!r.ok) return null; const b = Buffer.from(await r.arrayBuffer()); if (b.length > 40000) return null; return 'data:' + (r.headers.get('content-type') || 'image/jpeg') + ';base64,' + b.toString('base64'); } catch (e) { return null; }
 }
-async function fetchChannel(input) {
+async function fetchChannel(input, maxVideos = 2000) {
   const c = await api('channels', Object.assign({ part: 'snippet,statistics,contentDetails', maxResults: 1 }, parseHandle(input)));
   const ch = c.items && c.items[0]; if (!ch) throw new Error('Channel not found: ' + input);
   const uploads = ch.contentDetails.relatedPlaylists.uploads;
   const ids = []; let pageToken = '';
-  do { const p = await api('playlistItems', { part: 'contentDetails', playlistId: uploads, maxResults: 50, pageToken }); (p.items || []).forEach(i => ids.push(i.contentDetails.videoId)); pageToken = p.nextPageToken || ''; } while (pageToken && ids.length < 2000);
+  do { const p = await api('playlistItems', { part: 'contentDetails', playlistId: uploads, maxResults: 50, pageToken }); (p.items || []).forEach(i => ids.push(i.contentDetails.videoId)); pageToken = p.nextPageToken || ''; } while (pageToken && ids.length < maxVideos);
+  ids.splice(maxVideos);
   const videos = [];
   for (let i = 0; i < ids.length; i += 50) {
     const v = await api('videos', { part: 'snippet,statistics,contentDetails', id: ids.slice(i, i + 50).join(','), maxResults: 50 });
@@ -55,7 +60,7 @@ async function fetchChannel(input) {
       const t = it.snippet.thumbnails || {};
       videos.push({ id: it.id, title: it.snippet.title, publishedAt: it.snippet.publishedAt, durationSec: isoDur(it.contentDetails.duration),
         views: +it.statistics.viewCount || 0, likes: +it.statistics.likeCount || 0, comments: +it.statistics.commentCount || 0,
-        thumb: await toDataUrl((t.default && t.default.url) || null) });
+        thumb: noThumbs ? null : await toDataUrl((t.default && t.default.url) || null) });
     }
   }
   console.error(`${ch.snippet.title}: ${ch.statistics.subscriberCount} subs, ${videos.length} videos`);
@@ -66,7 +71,17 @@ async function fetchChannel(input) {
 (async () => {
   const channels = [];
   for (const h of handles) channels.push(await fetchChannel(h));
-  const out = { version: 1, fetchedAt: new Date().toISOString(), channels };
+  // Benchmark channels: other creators to compare upload habits against. Only their newest
+  // uploads are kept, and a bad handle is reported but never fails the whole run.
+  const benchmarks = [];
+  if (benchFile) {
+    let list = []; try { list = (JSON.parse(fs.readFileSync(benchFile, 'utf8')).channels || []); } catch (e) { console.error('No benchmark list at ' + benchFile); }
+    for (const h of list) {
+      try { const b = await fetchChannel(h, maxBench); b.requestedHandle = h; benchmarks.push(b); }
+      catch (e) { console.error('Benchmark ' + h + ' skipped: ' + e.message); benchmarks.push({ requestedHandle: h, error: e.message }); }
+    }
+  }
+  const out = { version: 1, fetchedAt: new Date().toISOString(), channels, benchmarks };
   fs.mkdirSync(path.dirname(outFile), { recursive: true });
   fs.writeFileSync(outFile, JSON.stringify(out));
   console.error('Wrote ' + outFile);
