@@ -754,8 +754,11 @@ function renderGrowth(){
   const since = periodSince();
   const ser = field => ['a','b'].map(k => { const h = (state.channels[k]?.history || []).slice().sort((x,y)=>x.d<y.d?-1:1); let pts = h.map(p => ({ x: parseDay(p.d).getTime(), y: p[field] })); if (since) { const s = since.getTime(); const before = pts.filter(p=>p.x < s); pts = pts.filter(p=>p.x >= s); if (before.length) pts.unshift(before[before.length-1]); } return { name: cfgCh(k).name, color: chanColor(k), points: pts }; });
   $('#lgSubs').innerHTML = legendHTML(); $('#lgViews').innerHTML = legendHTML();
-  const x0 = since ? since.getTime() : undefined;
-  drawLines($('#chSubs'), ser('subs'), { x0 }); drawLines($('#chViews'), ser('views'), { x0 });
+  const subs = ser('subs'), views = ser('views');
+  const firstPt = Math.min(...[...subs, ...views].flatMap(s => s.points.map(p => p.x)).filter(Number.isFinite));
+  // Start the axis where tracking began (half a day of breathing room), never earlier than the selected period.
+  const x0 = Number.isFinite(firstPt) ? (since ? Math.max(since.getTime(), firstPt - DAY/2) : firstPt - DAY/2) : (since ? since.getTime() : undefined);
+  drawLines($('#chSubs'), subs, { x0 }); drawLines($('#chViews'), views, { x0 });
 }
 function renderLeader(){
   const vids = videosIn(null, periodSince()).sort((a,b)=>b.views-a.views).slice(0,6);
