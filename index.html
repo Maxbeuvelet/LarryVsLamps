@@ -557,7 +557,7 @@ const store = {
       if (d.config) state.config = Object.assign(structuredClone(DEFAULT_CONFIG), d.config);
       if (d.channels && Object.keys(d.channels).length) { state.channels = d.channels; state.videos = d.videos || {}; state.sample = false; state.updatedAt = d.updatedAt || null; state.mode = 'live'; }
       else state.mode = 'nodata';
-      state.benchmarks = d.benchmarks || {}; state.benchmarkHandles = d.benchmarkHandles || [];
+      state.benchmarks = d.benchmarks || {}; state.benchmarkHandles = d.benchmarkHandles || []; state.benchSel = null;
     } catch (e) { console.warn('No data file yet', e); state.mode = 'nodata'; }
     for (const [id, f] of Object.entries(overrides)) if (state.videos[id]) state.videos[id].formatOverride = f;
     applyConfig(); render();
