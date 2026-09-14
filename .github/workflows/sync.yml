@@ -2,7 +2,8 @@ name: Sync YouTube data
 
 on:
   schedule:
-    - cron: "0 10 * * *"   # 06:00 New York (10:00 UTC) every day
+    - cron: "17 9 * * *"    # ~05:17 New York; off-peak minute so GitHub starts it promptly
+    - cron: "17 21 * * *"   # ~17:17 New York; second chance in case the morning run is delayed
   workflow_dispatch:
   push:
     branches: [main]
